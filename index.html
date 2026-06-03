@@ -150,7 +150,6 @@
     </main>
 
     <script>
-        // DATA DEFAULT (Kosong/Awal)
         const generateEmptyWinners = () => {
             let w = [];
             for(let i=1; i<=6; i++) w.push({ id: i, season: `Season ${i}`, name: 'Belum Ada', photo: 'images/default.png' });
@@ -159,8 +158,8 @@
 
         const defaultData = {
             adminPassword: "admin004",
-            players: [], // {id, name, photo, mp, w, d, l, gf, ga, pts}
-            h2hMatches: [], // {id, p1Id, p2Id, p1Score, p2Score, date}
+            players: [], // HANYA berisi id, name, photo. (Statistik dihitung otomatis)
+            h2hMatches: [], // {id, p1Id, p2Id, winner: 'p1' | 'p2' | 'draw', dateStr}
             winners: generateEmptyWinners(),
             aboutInfo: {
                 title: "Masterlaga",
@@ -171,13 +170,13 @@
             }
         };
 
-        // Load dari LocalStorage atau gunakan default
-        let appData = JSON.parse(localStorage.getItem('masterlaga_v2')) || defaultData;
+        // Menggunakan key localstorage baru v3 agar tidak bentrok dengan data skor gol yang lama
+        let appData = JSON.parse(localStorage.getItem('masterlaga_v3')) || defaultData;
         let activeTab = 'klasemen';
         let isAdminLoggedIn = false;
 
         function saveData() {
-            localStorage.setItem('masterlaga_v2', JSON.stringify(appData));
+            localStorage.setItem('masterlaga_v3', JSON.stringify(appData));
         }
 
         let customDialogCallback = null;
@@ -189,7 +188,6 @@
             document.getElementById('dialog-btn-confirm').innerText = 'Yakin Hapus';
             document.getElementById('dialog-btn-confirm').className = 'flex-1 py-4 text-red-600 font-black hover:bg-red-50 transition-colors';
             document.getElementById('dialog-btn-cancel').style.display = 'block';
-            
             customDialogCallback = callback;
             document.getElementById('custom-dialog').classList.remove('hidden');
         }
@@ -202,7 +200,6 @@
             document.getElementById('dialog-btn-confirm').innerText = 'Tutup';
             document.getElementById('dialog-btn-confirm').className = 'flex-1 py-4 text-blue-600 font-black hover:bg-blue-50 transition-colors w-full';
             document.getElementById('dialog-btn-cancel').style.display = 'none';
-            
             customDialogCallback = null;
             document.getElementById('custom-dialog').classList.remove('hidden');
         }
@@ -270,6 +267,41 @@
 
         function switchTab(tabId) { activeTab = tabId; renderApp(); }
 
+        // FUNGSI INTI: Menghitung statistik berdasarkan History Tanding
+        function getCalculatedStandings() {
+            let stats = {};
+            // Inisiasi player dengan 0
+            appData.players.forEach(p => {
+                stats[p.id] = { ...p, mp: 0, w: 0, d: 0, l: 0, pts: 0 };
+            });
+
+            // Hitung dari riwayat pertandingan
+            appData.h2hMatches.forEach(m => {
+                // Lewati jika player sudah dihapus admin
+                if(!stats[m.p1Id] || !stats[m.p2Id]) return;
+
+                stats[m.p1Id].mp++;
+                stats[m.p2Id].mp++;
+
+                if (m.winner === 'p1') {
+                    stats[m.p1Id].w++;
+                    stats[m.p1Id].pts += 1; // 1 Win = 1 Point
+                    stats[m.p2Id].l++;
+                } else if (m.winner === 'p2') {
+                    stats[m.p2Id].w++;
+                    stats[m.p2Id].pts += 1; // 1 Win = 1 Point
+                    stats[m.p1Id].l++;
+                } else if (m.winner === 'draw') {
+                    stats[m.p1Id].d++;
+                    stats[m.p2Id].d++;
+                    // Draw = 0 Point
+                }
+            });
+
+            // Urutkan berdasarkan Poin tertinggi, lalu persentase menang, lalu jumlah main tersedikit
+            return Object.values(stats).sort((a, b) => b.pts - a.pts || b.w - a.w || a.mp - b.mp);
+        }
+
         function renderKlasemen() {
             if (appData.players.length === 0) {
                 return `
@@ -277,16 +309,15 @@
                     <div class="w-24 h-24 bg-slate-50 rounded-full flex items-center justify-center mb-6">
                         <i class="far fa-folder-open text-5xl text-slate-300"></i>
                     </div>
-                    <h3 class="text-2xl font-black text-slate-700 mb-2">Klasemen Masih Kosong</h3>
-                    <p class="text-slate-500 font-medium max-w-md">Admin perlu mendaftarkan player dan menginput data poin di Panel Admin.</p>
+                    <h3 class="text-2xl font-black text-slate-700 mb-2">Klasemen Kosong</h3>
+                    <p class="text-slate-500 font-medium max-w-md">Admin perlu mendaftarkan nama player dan mulai mengisi riwayat pertandingan harian.</p>
                 </div>`;
             }
 
-            const sortedPlayers = [...appData.players].sort((a, b) => b.pts - a.pts || (b.gf - b.ga) - (a.gf - a.ga));
+            const sortedPlayers = getCalculatedStandings();
             let rows = '';
             
             sortedPlayers.forEach((p, index) => {
-                const sg = Number(p.gf) - Number(p.ga);
                 rows += `
                 <tr class="border-b border-slate-100 hover:bg-slate-50 transition-colors ${index === 0 ? 'bg-gradient-to-r from-yellow-50 to-transparent' : ''}">
                     <td class="px-5 py-4 text-center font-black ${index === 0 ? 'text-yellow-600 text-xl' : 'text-slate-400'}">${index === 0 ? '<i class="fas fa-crown"></i>' : index + 1}</td>
@@ -296,13 +327,10 @@
                         </div>
                         <span class="truncate max-w-[120px] sm:max-w-xs">${p.name}</span>
                     </td>
-                    <td class="px-3 py-4 text-center text-slate-600 font-semibold">${p.mp}</td>
-                    <td class="px-3 py-4 text-center text-emerald-600 font-black">${p.w}</td>
-                    <td class="px-3 py-4 text-center text-slate-400 font-semibold">${p.d}</td>
-                    <td class="px-3 py-4 text-center text-rose-500 font-semibold">${p.l}</td>
-                    <td class="px-3 py-4 text-center text-slate-500 hidden sm:table-cell">${p.gf}</td>
-                    <td class="px-3 py-4 text-center text-slate-500 hidden sm:table-cell">${p.ga}</td>
-                    <td class="px-3 py-4 text-center text-brand-purple font-black hidden sm:table-cell">${sg > 0 ? '+'+sg : sg}</td>
+                    <td class="px-5 py-4 text-center text-slate-600 font-semibold">${p.mp}</td>
+                    <td class="px-5 py-4 text-center text-emerald-600 font-black">${p.w}</td>
+                    <td class="px-5 py-4 text-center text-slate-400 font-semibold">${p.d}</td>
+                    <td class="px-5 py-4 text-center text-rose-500 font-semibold">${p.l}</td>
                     <td class="px-5 py-4 text-center font-black text-brand-blue text-xl bg-blue-50/50">${p.pts}</td>
                 </tr>`;
             });
@@ -310,22 +338,19 @@
             return `
             <div class="bg-white rounded-3xl shadow-xl overflow-hidden border border-slate-100">
                 <div class="bg-slate-50 border-b border-slate-100 px-6 py-4 flex justify-between items-center">
-                    <h2 class="font-black text-slate-800 tracking-wide flex items-center gap-2"><i class="fas fa-list-ol text-brand-blue"></i> KLASEMEN SEMENTARA</h2>
+                    <h2 class="font-black text-slate-800 tracking-wide flex items-center gap-2"><i class="fas fa-list-ol text-brand-blue"></i> LEADERBOARD KEMENANGAN</h2>
                 </div>
                 <div class="overflow-x-auto">
                     <table class="w-full text-sm text-left whitespace-nowrap min-w-[600px]">
                         <thead class="text-xs text-slate-400 uppercase bg-white font-black border-b-2 border-slate-100">
                             <tr>
-                                <th class="px-5 py-4 text-center w-14">#</th>
+                                <th class="px-5 py-4 text-center w-14">Rank</th>
                                 <th class="px-5 py-4">Nama Player</th>
-                                <th class="px-3 py-4 text-center tooltip" title="Main">M</th>
-                                <th class="px-3 py-4 text-center text-emerald-600">W</th>
-                                <th class="px-3 py-4 text-center">D</th>
-                                <th class="px-3 py-4 text-center text-rose-500">L</th>
-                                <th class="px-3 py-4 text-center hidden sm:table-cell" title="Gol In">GM</th>
-                                <th class="px-3 py-4 text-center hidden sm:table-cell" title="Gol Out">GK</th>
-                                <th class="px-3 py-4 text-center hidden sm:table-cell" title="Selisih Gol">SG</th>
-                                <th class="px-5 py-4 text-center text-brand-blue">PTS</th>
+                                <th class="px-5 py-4 text-center tooltip" title="Main">Main</th>
+                                <th class="px-5 py-4 text-center text-emerald-600">Menang</th>
+                                <th class="px-5 py-4 text-center">Seri</th>
+                                <th class="px-5 py-4 text-center text-rose-500">Kalah</th>
+                                <th class="px-5 py-4 text-center text-brand-blue">Poin (Wins)</th>
                             </tr>
                         </thead>
                         <tbody>${rows}</tbody>
@@ -336,7 +361,7 @@
 
         function renderH2H() {
             if (appData.players.length < 2) {
-                return `<div class="bg-white p-10 text-center rounded-3xl shadow-xl border border-slate-100"><p class="text-slate-500 font-bold">Minimal butuh 2 player untuk perbandingan H2H. Admin harap tambahkan player.</p></div>`;
+                return `<div class="bg-white p-10 text-center rounded-3xl shadow-xl border border-slate-100"><p class="text-slate-500 font-bold">Minimal butuh 2 player untuk perbandingan H2H.</p></div>`;
             }
 
             let pOptions = '';
@@ -347,7 +372,7 @@
                 <div class="bg-gradient-to-r from-brand-dark to-brand-blue px-6 py-8 text-center relative overflow-hidden">
                     <div class="absolute inset-0 opacity-10 bg-[url('data:image/svg+xml;base64,PHN2ZyB3aWR0aD0iMjAiIGhlaWdodD0iMjAiIHhtbG5zPSJodHRwOi8vd3d3LnczLm9yZy8yMDAwL3N2ZyI+PGNpcmNsZSBjeD0iMiIgY3k9IjIiIHI9IjIiIGZpbGw9IiNmZmYiLz48L3N2Zz4=')]"></div>
                     <h2 class="text-3xl font-black text-white relative z-10 tracking-widest mb-2"><i class="fas fa-bolt text-brand-accent mr-2"></i> HEAD TO HEAD</h2>
-                    <p class="text-blue-200 relative z-10 text-sm font-medium">Bandingkan statistik pertemuan antar player</p>
+                    <p class="text-blue-200 relative z-10 text-sm font-medium">Rekor dominasi kemenangan antar pemain</p>
                 </div>
                 
                 <div class="p-6 sm:p-10 bg-slate-50">
@@ -369,13 +394,11 @@
                     
                     <div class="mt-8 text-center">
                         <button onclick="calculateH2H()" class="bg-brand-dark hover:bg-black text-white font-black px-10 py-4 rounded-xl shadow-xl shadow-slate-900/20 transition-transform transform hover:-translate-y-1 tracking-widest text-sm">
-                            <i class="fas fa-chart-bar mr-2"></i> LIHAT STATISTIK
+                            <i class="fas fa-chart-bar mr-2"></i> CEK REKOR KEMENANGAN
                         </button>
                     </div>
 
-                    <div id="h2h-result" class="mt-10 hidden animate-fade-in-up">
-                        <!-- Render dari JS -->
-                    </div>
+                    <div id="h2h-result" class="mt-10 hidden animate-fade-in-up"></div>
                 </div>
             </div>`;
         }
@@ -389,36 +412,34 @@
                 return;
             }
 
-            const p1 = appData.players.find(p => p.id === p1Id);
-            const p2 = appData.players.find(p => p.id === p2Id);
+            const p1Name = appData.players.find(p => p.id === p1Id)?.name || 'P1';
+            const p2Name = appData.players.find(p => p.id === p2Id)?.name || 'P2';
 
-            // Filter riwayat tanding
+            // Filter riwayat tanding yang melibatkan KEDUANYA
             const matches = appData.h2hMatches.filter(m => 
                 (m.p1Id === p1Id && m.p2Id === p2Id) || (m.p1Id === p2Id && m.p2Id === p1Id)
             );
 
             let p1Wins = 0, p2Wins = 0, draws = 0;
-            let p1Goals = 0, p2Goals = 0;
 
             matches.forEach(m => {
-                let s1 = Number(m.p1Score), s2 = Number(m.p2Score);
-                if (m.p1Id === p2Id) { s1 = Number(m.p2Score); s2 = Number(m.p1Score); } // Balik skor jika posisi terbalik di data
-                
-                p1Goals += s1;
-                p2Goals += s2;
-
-                if (s1 > s2) p1Wins++;
-                else if (s2 > s1) p2Wins++;
-                else draws++;
+                // Cek skenario apakah p1Id di data cocok dengan Pilihan Kiri (p1Id)
+                if (m.p1Id === p1Id) {
+                    if(m.winner === 'p1') p1Wins++;
+                    else if(m.winner === 'p2') p2Wins++;
+                    else draws++;
+                } else { // Jika m.p1Id di data adalah Pilihan Kanan (p2Id) karena posisi dibalik admin
+                    if(m.winner === 'p1') p2Wins++; // Yang menang p1 di data, berarti P2 di UI
+                    else if(m.winner === 'p2') p1Wins++;
+                    else draws++;
+                }
             });
 
             const totalMatches = matches.length;
-            const p1WinPct = totalMatches === 0 ? 0 : Math.round((p1Wins / totalMatches) * 100);
-            const p2WinPct = totalMatches === 0 ? 0 : Math.round((p2Wins / totalMatches) * 100);
 
             let html = `
             <div class="bg-white rounded-2xl border border-slate-200 p-6 sm:p-8 shadow-sm">
-                <h3 class="text-center font-black text-slate-800 text-xl mb-8 uppercase tracking-widest border-b border-slate-100 pb-4">Rekor Pertemuan: <span class="text-brand-blue">${totalMatches}</span> Laga</h3>
+                <h3 class="text-center font-black text-slate-800 text-xl mb-8 uppercase tracking-widest border-b border-slate-100 pb-4">Telah Bertemu: <span class="text-brand-blue">${totalMatches}</span> Kali</h3>
                 
                 <!-- Win Rate Bar -->
                 <div class="flex justify-between text-xs font-black mb-2 px-1">
@@ -426,24 +447,17 @@
                     <span class="text-slate-400">${draws} SERI</span>
                     <span class="text-rose-500">${p2Wins} MENANG</span>
                 </div>
-                <div class="w-full h-4 bg-slate-200 rounded-full overflow-hidden flex mb-8 shadow-inner">
+                <div class="w-full h-6 bg-slate-200 rounded-full overflow-hidden flex mb-8 shadow-inner">
                     <div class="bg-brand-blue h-full" style="width: ${totalMatches===0?0: (p1Wins/totalMatches)*100}%"></div>
                     <div class="bg-slate-400 h-full" style="width: ${totalMatches===0?0: (draws/totalMatches)*100}%"></div>
                     <div class="bg-rose-500 h-full" style="width: ${totalMatches===0?0: (p2Wins/totalMatches)*100}%"></div>
                 </div>
 
                 <!-- Stats Detail -->
-                <div class="space-y-6">
-                    <div class="flex justify-between items-center text-sm font-bold">
-                        <div class="w-1/3 text-brand-blue text-2xl font-black">${p1Wins}</div>
-                        <div class="w-1/3 text-center text-slate-400 uppercase tracking-widest text-xs">Kemenangan</div>
-                        <div class="w-1/3 text-right text-rose-500 text-2xl font-black">${p2Wins}</div>
-                    </div>
-                    <div class="flex justify-between items-center text-sm font-bold">
-                        <div class="w-1/3 text-brand-blue text-2xl font-black">${p1Goals}</div>
-                        <div class="w-1/3 text-center text-slate-400 uppercase tracking-widest text-xs">Total Gol</div>
-                        <div class="w-1/3 text-right text-rose-500 text-2xl font-black">${p2Goals}</div>
-                    </div>
+                <div class="flex justify-between items-center text-sm font-bold bg-slate-50 p-4 rounded-xl border border-slate-100">
+                    <div class="w-1/3 text-brand-blue text-3xl font-black">${p1Wins}</div>
+                    <div class="w-1/3 text-center text-slate-400 uppercase tracking-widest text-[10px]">Dominasi (Win Rate)</div>
+                    <div class="w-1/3 text-right text-rose-500 text-3xl font-black">${p2Wins}</div>
                 </div>
             </div>`;
 
@@ -495,7 +509,7 @@
                                     <i class="fas fa-map-marker-alt"></i>
                                 </div>
                                 <div>
-                                    <h4 class="font-black text-slate-800 text-lg tracking-wide mb-1">Markas Utama</h4>
+                                    <h4 class="font-bold text-slate-800 text-lg tracking-wide mb-1">Markas Utama</h4>
                                     <p class="text-slate-500 font-medium leading-relaxed">${info.address}</p>
                                 </div>
                             </div>
@@ -520,132 +534,139 @@
                     <div class="absolute -right-10 -top-10 text-white/5"><i class="fas fa-cog text-9xl"></i></div>
                     <div class="relative z-10 text-center md:text-left">
                         <h2 class="text-3xl font-black text-white flex items-center gap-3 justify-center md:justify-start"><i class="fas fa-cogs text-brand-accent"></i> PANEL ADMIN</h2>
-                        <p class="text-slate-400 font-medium mt-2 text-sm max-w-xl">Semua data yang diedit akan tersimpan otomatis di browser (Local Storage). Untuk web statis GitHub, gunakan fitur Export/Import di bawah jika pindah HP/Laptop.</p>
+                        <p class="text-slate-400 font-medium mt-2 text-sm max-w-xl">Semua data klasemen (poin, menang, dsb) kini dihitung OTOMATIS dari Riwayat Pertandingan harian di bawah.</p>
                     </div>
                     <button onclick="handleLogout()" class="relative z-10 px-8 py-4 bg-rose-500 text-white font-black rounded-xl hover:bg-rose-600 shadow-lg shadow-rose-500/30 transition-transform transform hover:-translate-y-1 tracking-widest text-sm">LOGOUT</button>
                 </div>
                 
                 <!-- IMPORT / EXPORT DATA -->
                 <div class="bg-white p-8 rounded-3xl shadow-xl border border-slate-100">
-                    <h3 class="text-xl font-black text-slate-800 mb-6 flex items-center gap-3"><i class="fas fa-database text-brand-blue"></i> Backup & Restore Data</h3>
+                    <h3 class="text-xl font-black text-slate-800 mb-6 flex items-center gap-3"><i class="fas fa-database text-brand-blue"></i> Backup & Restore Data (Untuk Pindah Perangkat)</h3>
                     <div class="flex flex-col md:flex-row gap-4">
                         <button onclick="exportData()" class="flex-1 bg-slate-800 hover:bg-black text-white font-bold py-3 rounded-xl transition-colors"><i class="fas fa-copy mr-2"></i> Salin Data (Export)</button>
                         <button onclick="importDataPrompt()" class="flex-1 bg-brand-accent hover:bg-yellow-400 text-brand-dark font-black py-3 rounded-xl transition-colors"><i class="fas fa-paste mr-2"></i> Tempel Data (Import)</button>
                     </div>
                 </div>
 
-                <!-- PENGATURAN UMUM -->
-                <div class="bg-white p-8 rounded-3xl shadow-xl border border-slate-100">
-                    <h3 class="text-xl font-black text-slate-800 mb-6 flex items-center gap-3"><i class="fas fa-info-circle text-brand-purple"></i> Pengaturan Website & About</h3>
-                    <div class="grid grid-cols-1 md:grid-cols-2 gap-6">
-                        <div><label class="text-xs font-black text-slate-400 mb-2 block uppercase tracking-wider">Password Admin</label>
-                        <input type="text" value="${appData.adminPassword}" onchange="updateAbout('adminPassword', this.value)" class="w-full border-2 border-slate-200 rounded-xl px-4 py-3 font-bold text-brand-purple outline-none focus:border-brand-purple"></div>
-                        
-                        <div><label class="text-xs font-black text-slate-400 mb-2 block uppercase tracking-wider">Nomor WA Admin (62...)</label>
-                        <input type="text" value="${appData.aboutInfo.contactWA}" onchange="updateAbout('contactWA', this.value)" class="w-full border-2 border-slate-200 rounded-xl px-4 py-3 font-bold text-slate-700 outline-none focus:border-brand-purple"></div>
-                        
-                        <div class="md:col-span-2"><label class="text-xs font-black text-slate-400 mb-2 block uppercase tracking-wider">Deskripsi Komunitas</label>
-                        <textarea onchange="updateAbout('description', this.value)" class="w-full border-2 border-slate-200 rounded-xl px-4 py-3 font-bold text-slate-700 outline-none focus:border-brand-purple h-24">${appData.aboutInfo.description}</textarea></div>
-                    </div>
-                </div>
-
-                <!-- KELOLA PEMAIN & KLASEMEN -->
+                <!-- DAFTAR PEMAIN (NO STATS INPUT) -->
                 <div class="bg-white p-8 rounded-3xl shadow-xl border border-slate-100 overflow-hidden">
                     <div class="flex flex-col sm:flex-row justify-between items-start sm:items-center mb-6 gap-4">
-                        <h3 class="text-xl font-black text-slate-800 flex items-center gap-3"><i class="fas fa-users text-emerald-500"></i> Kelola Pemain & Klasemen</h3>
-                        <button onclick="addPlayer()" class="bg-emerald-500 hover:bg-emerald-600 text-white font-black px-6 py-3 rounded-xl shadow-lg shadow-emerald-500/30 transition-transform transform hover:-translate-y-1 text-sm tracking-widest"><i class="fas fa-plus mr-2"></i> TAMBAH PEMAIN</button>
+                        <div>
+                            <h3 class="text-xl font-black text-slate-800 flex items-center gap-3"><i class="fas fa-users text-emerald-500"></i> Kelola Player Terdaftar</h3>
+                            <p class="text-xs text-slate-400 mt-1">Tambah player baru di sini agar bisa dipilih saat tanding.</p>
+                        </div>
+                        <button onclick="addPlayer()" class="bg-emerald-500 hover:bg-emerald-600 text-white font-black px-6 py-3 rounded-xl shadow-lg shadow-emerald-500/30 transition-transform transform hover:-translate-y-1 text-sm tracking-widest"><i class="fas fa-plus mr-2"></i> TAMBAH PLAYER BARU</button>
                     </div>
                     <div class="overflow-x-auto pb-4">
-                        <table class="w-full text-sm text-left whitespace-nowrap min-w-[900px]">
+                        <table class="w-full text-sm text-left whitespace-nowrap min-w-[500px]">
                             <thead class="bg-slate-50 text-slate-400 font-black text-xs uppercase tracking-wider border-b border-slate-200">
-                                <tr><th class="p-4 rounded-tl-xl">Nama Player</th><th class="p-4">Foto (images/..)</th><th class="p-4 w-16">M</th><th class="p-4 w-16">W</th><th class="p-4 w-16">D</th><th class="p-4 w-16">L</th><th class="p-4 w-16">GM</th><th class="p-4 w-16">GK</th><th class="p-4 w-20 text-brand-blue">PTS</th><th class="p-4 text-center rounded-tr-xl">Aksi</th></tr>
+                                <tr><th class="p-4 rounded-tl-xl w-1/2">Nama Player</th><th class="p-4 w-1/2">Path Foto (images/...)</th><th class="p-4 text-center rounded-tr-xl w-24">Aksi Hapus</th></tr>
                             </thead>
                             <tbody class="divide-y divide-slate-100">`;
             
             appData.players.forEach((p, i) => {
                 html += `
                 <tr class="hover:bg-slate-50/50">
-                    <td class="p-2"><input type="text" value="${p.name}" onchange="updatePlayer(${i}, 'name', this.value)" class="w-full border border-slate-200 rounded-lg px-3 py-2 font-bold text-slate-700 focus:border-brand-blue outline-none"></td>
-                    <td class="p-2"><input type="text" value="${p.photo}" onchange="updatePlayer(${i}, 'photo', this.value)" class="w-full border border-slate-200 rounded-lg px-3 py-2 font-mono text-xs text-slate-500 focus:border-brand-blue outline-none"></td>
-                    <td class="p-2"><input type="number" value="${p.mp}" onchange="updatePlayer(${i}, 'mp', this.value)" class="w-14 border border-slate-200 rounded-lg px-2 py-2 text-center font-bold text-slate-700 outline-none focus:border-brand-blue"></td>
-                    <td class="p-2"><input type="number" value="${p.w}" onchange="updatePlayer(${i}, 'w', this.value)" class="w-14 border border-slate-200 rounded-lg px-2 py-2 text-center font-bold text-emerald-600 outline-none focus:border-emerald-500"></td>
-                    <td class="p-2"><input type="number" value="${p.d}" onchange="updatePlayer(${i}, 'd', this.value)" class="w-14 border border-slate-200 rounded-lg px-2 py-2 text-center font-bold text-slate-500 outline-none focus:border-slate-500"></td>
-                    <td class="p-2"><input type="number" value="${p.l}" onchange="updatePlayer(${i}, 'l', this.value)" class="w-14 border border-slate-200 rounded-lg px-2 py-2 text-center font-bold text-rose-500 outline-none focus:border-rose-500"></td>
-                    <td class="p-2"><input type="number" value="${p.gf}" onchange="updatePlayer(${i}, 'gf', this.value)" class="w-14 border border-slate-200 rounded-lg px-2 py-2 text-center font-bold text-slate-700 outline-none focus:border-brand-blue"></td>
-                    <td class="p-2"><input type="number" value="${p.ga}" onchange="updatePlayer(${i}, 'ga', this.value)" class="w-14 border border-slate-200 rounded-lg px-2 py-2 text-center font-bold text-slate-700 outline-none focus:border-brand-blue"></td>
-                    <td class="p-2"><input type="number" value="${p.pts}" onchange="updatePlayer(${i}, 'pts', this.value)" class="w-16 border border-brand-blue rounded-lg px-2 py-2 text-center font-black text-brand-blue bg-blue-50 outline-none focus:border-brand-dark"></td>
-                    <td class="p-2 text-center"><button onclick="deletePlayer(${i})" class="w-10 h-10 rounded-lg text-rose-500 hover:bg-rose-100 transition-colors" title="Hapus"><i class="fas fa-trash-alt"></i></button></td>
+                    <td class="p-2"><input type="text" value="${p.name}" onchange="updatePlayer(${i}, 'name', this.value)" class="w-full border-2 border-slate-200 rounded-lg px-4 py-2 font-bold text-slate-700 focus:border-brand-blue outline-none"></td>
+                    <td class="p-2"><input type="text" value="${p.photo}" onchange="updatePlayer(${i}, 'photo', this.value)" class="w-full border-2 border-slate-200 rounded-lg px-4 py-2 font-mono text-xs text-slate-500 focus:border-brand-blue outline-none"></td>
+                    <td class="p-2 text-center"><button onclick="deletePlayer(${i})" class="w-12 h-12 rounded-xl text-rose-500 bg-rose-50 hover:bg-rose-500 hover:text-white transition-colors" title="Hapus"><i class="fas fa-trash-alt"></i></button></td>
                 </tr>`;
             });
-            if(appData.players.length === 0) html += `<tr><td colspan="10" class="text-center p-8 text-slate-400 font-bold">Daftar pemain kosong.</td></tr>`;
+            if(appData.players.length === 0) html += `<tr><td colspan="3" class="text-center p-8 text-slate-400 font-bold">Daftar pemain masih kosong. Tambah player dulu.</td></tr>`;
 
             html += `</tbody></table></div></div>`;
 
-            // KELOLA PERTANDINGAN H2H
+            // INPUT HASIL TANDING (CEPAT)
             html += `
                 <div class="bg-white p-8 rounded-3xl shadow-xl border border-slate-100">
-                    <h3 class="text-xl font-black text-slate-800 mb-6 flex items-center gap-3"><i class="fas fa-bolt text-brand-accent"></i> Input Pertandingan (H2H)</h3>
+                    <h3 class="text-xl font-black text-slate-800 mb-2 flex items-center gap-3"><i class="fas fa-gamepad text-brand-accent"></i> Input Hasil Pertandingan Harian</h3>
+                    <p class="text-sm text-slate-500 mb-6">Poin dan Klasemen akan otomatis dihitung dari setiap baris data di bawah ini (Menang = 1 Poin).</p>
                     
-                    <div class="bg-slate-50 p-6 rounded-2xl border border-slate-200 mb-8 flex flex-col md:flex-row items-center gap-4">
-                        <select id="new-h2h-p1" class="flex-1 border-2 border-slate-200 rounded-xl px-4 py-3 font-bold text-slate-700 bg-white">${pOptions}</select>
-                        <input type="number" id="new-h2h-s1" placeholder="Skor" class="w-20 border-2 border-slate-200 rounded-xl px-4 py-3 font-black text-center text-brand-blue bg-white">
-                        <span class="font-black text-slate-400">VS</span>
-                        <input type="number" id="new-h2h-s2" placeholder="Skor" class="w-20 border-2 border-slate-200 rounded-xl px-4 py-3 font-black text-center text-rose-500 bg-white">
-                        <select id="new-h2h-p2" class="flex-1 border-2 border-slate-200 rounded-xl px-4 py-3 font-bold text-slate-700 bg-white">${pOptions}</select>
-                        <button onclick="addH2HMatch()" class="bg-brand-dark hover:bg-black text-white font-black px-6 py-3 rounded-xl whitespace-nowrap"><i class="fas fa-check"></i> SIMPAN</button>
+                    <div class="bg-brand-dark p-6 rounded-2xl border border-slate-700 mb-8 flex flex-col md:flex-row items-center gap-4">
+                        <select id="new-h2h-p1" class="flex-1 border-2 border-slate-700 rounded-xl px-4 py-3 font-bold text-slate-200 bg-slate-800 focus:border-brand-accent">${pOptions}</select>
+                        
+                        <select id="new-h2h-result" class="flex-1 md:flex-none md:w-48 border-2 border-brand-accent rounded-xl px-4 py-3 font-black text-center text-brand-dark bg-brand-accent cursor-pointer">
+                            <option value="p1">Menang (Kiri) 🏆</option>
+                            <option value="draw">Seri (Draw) 🤝</option>
+                            <option value="p2">Menang (Kanan) 🏆</option>
+                        </select>
+                        
+                        <select id="new-h2h-p2" class="flex-1 border-2 border-slate-700 rounded-xl px-4 py-3 font-bold text-slate-200 bg-slate-800 focus:border-brand-accent">${pOptions}</select>
+                        
+                        <button onclick="addH2HMatch()" class="bg-blue-600 hover:bg-blue-500 text-white font-black px-8 py-3 rounded-xl whitespace-nowrap transition-colors"><i class="fas fa-save mr-2"></i> SIMPAN HASIL</button>
                     </div>
 
-                    <div class="space-y-2 max-h-64 overflow-y-auto pr-2 custom-scrollbar">`;
+                    <div class="space-y-3 max-h-96 overflow-y-auto pr-2 custom-scrollbar">`;
             
             appData.h2hMatches.slice().reverse().forEach((m, idx) => {
                 const actualIndex = appData.h2hMatches.length - 1 - idx;
                 const p1 = appData.players.find(p => p.id === m.p1Id)?.name || 'Unknown';
                 const p2 = appData.players.find(p => p.id === m.p2Id)?.name || 'Unknown';
+                
+                let resultBadge = '';
+                if(m.winner === 'p1') resultBadge = `<span class="bg-brand-blue text-white px-3 py-1 rounded-md text-xs font-black tracking-widest"><i class="fas fa-caret-left"></i> KIRI MENANG</span>`;
+                else if(m.winner === 'p2') resultBadge = `<span class="bg-rose-500 text-white px-3 py-1 rounded-md text-xs font-black tracking-widest">KANAN MENANG <i class="fas fa-caret-right"></i></span>`;
+                else resultBadge = `<span class="bg-slate-300 text-slate-700 px-3 py-1 rounded-md text-xs font-black tracking-widest">SERI</span>`;
+
                 html += `
-                    <div class="flex justify-between items-center bg-white border border-slate-100 p-4 rounded-xl hover:shadow-md transition-shadow">
-                        <div class="flex-1 font-bold text-right ${m.p1Score > m.p2Score ? 'text-slate-800' : 'text-slate-500'}">${p1}</div>
-                        <div class="px-6 font-black text-lg text-brand-blue tracking-widest">${m.p1Score} - ${m.p2Score}</div>
-                        <div class="flex-1 font-bold text-left ${m.p2Score > m.p1Score ? 'text-slate-800' : 'text-slate-500'}">${p2}</div>
-                        <button onclick="deleteH2HMatch(${actualIndex})" class="text-rose-500 hover:bg-rose-50 w-8 h-8 rounded-lg transition-colors"><i class="fas fa-times"></i></button>
+                    <div class="flex flex-col sm:flex-row justify-between items-center bg-slate-50 border border-slate-200 p-4 rounded-xl hover:shadow-md transition-shadow gap-3">
+                        <div class="flex-1 w-full flex justify-between items-center sm:block sm:w-auto">
+                           <div class="font-bold sm:text-right w-full ${m.winner === 'p1' ? 'text-brand-blue text-lg' : 'text-slate-500'}">${p1}</div>
+                        </div>
+                        <div class="shrink-0 text-center w-32">${resultBadge}</div>
+                        <div class="flex-1 w-full flex justify-between items-center sm:block sm:w-auto">
+                           <div class="font-bold sm:text-left w-full ${m.winner === 'p2' ? 'text-rose-500 text-lg' : 'text-slate-500'}">${p2}</div>
+                        </div>
+                        <button onclick="deleteH2HMatch(${actualIndex})" class="text-slate-400 hover:text-rose-500 hover:bg-rose-50 w-10 h-10 shrink-0 rounded-lg transition-colors" title="Batalkan Laga"><i class="fas fa-times"></i></button>
                     </div>`;
             });
-            if(appData.h2hMatches.length === 0) html += `<p class="text-center text-slate-400 font-bold py-4">Belum ada riwayat H2H dicatat.</p>`;
+            if(appData.h2hMatches.length === 0) html += `<p class="text-center text-slate-400 font-bold py-8 border-2 border-dashed border-slate-200 rounded-xl">Belum ada laga harian dicatat.</p>`;
             
             html += `</div></div>`;
 
-            // THE WINNER ADMIN
+            // THE WINNER & PENGATURAN UMUM
             html += `
                 <div class="bg-white p-8 rounded-3xl shadow-xl border border-slate-100">
-                    <h3 class="text-xl font-black text-slate-800 mb-6 flex items-center gap-3"><i class="fas fa-trophy text-yellow-500"></i> Kelola The Winner (Season 1-6)</h3>
-                    <div class="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-6">`;
+                    <h3 class="text-xl font-black text-slate-800 mb-6 flex items-center gap-3"><i class="fas fa-trophy text-yellow-500"></i> Kelola The Winner (Turnamen Season 1-6)</h3>
+                    <div class="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-6 mb-10">`;
             
             appData.winners.forEach((w, i) => {
                 html += `
                 <div class="p-6 border-2 border-slate-100 rounded-2xl bg-slate-50 flex flex-col gap-3 relative overflow-hidden group hover:border-brand-accent transition-colors">
                     <span class="font-black text-xs text-brand-dark uppercase tracking-widest bg-yellow-300 inline-block px-3 py-1 rounded-md self-start shadow-sm">${w.season}</span>
                     <div><label class="text-[10px] font-bold text-slate-400 uppercase tracking-wider">Nama Juara</label>
-                    <input type="text" value="${w.name}" onchange="updateWinner(${i}, 'name', this.value)" class="w-full border border-slate-200 rounded-lg px-3 py-2 text-sm font-bold text-slate-800 outline-none focus:border-brand-purple"></div>
+                    <input type="text" value="${w.name}" onchange="updateWinner(${i}, 'name', this.value)" class="w-full border-2 border-slate-200 rounded-lg px-3 py-2 text-sm font-bold text-slate-800 outline-none focus:border-brand-purple"></div>
                     <div><label class="text-[10px] font-bold text-slate-400 uppercase tracking-wider">Foto (images/..)</label>
-                    <input type="text" value="${w.photo}" onchange="updateWinner(${i}, 'photo', this.value)" class="w-full border border-slate-200 rounded-lg px-3 py-2 text-xs font-mono text-slate-500 outline-none focus:border-brand-purple"></div>
+                    <input type="text" value="${w.photo}" onchange="updateWinner(${i}, 'photo', this.value)" class="w-full border-2 border-slate-200 rounded-lg px-3 py-2 text-xs font-mono text-slate-500 outline-none focus:border-brand-purple"></div>
                 </div>`;
             });
 
-            html += `</div></div></div>`;
+            html += `</div>
+                <h3 class="text-xl font-black text-slate-800 mb-6 flex items-center gap-3 border-t border-slate-100 pt-8"><i class="fas fa-info-circle text-brand-purple"></i> Pengaturan Aplikasi & Info Komunitas</h3>
+                <div class="grid grid-cols-1 md:grid-cols-2 gap-6">
+                    <div><label class="text-xs font-black text-slate-400 mb-2 block uppercase tracking-wider">Password Admin Baru</label>
+                    <input type="text" value="${appData.adminPassword}" onchange="updateAbout('adminPassword', this.value)" class="w-full border-2 border-slate-200 rounded-xl px-4 py-3 font-bold text-brand-purple outline-none focus:border-brand-purple"></div>
+                    <div><label class="text-xs font-black text-slate-400 mb-2 block uppercase tracking-wider">Nomor WA Admin (62...)</label>
+                    <input type="text" value="${appData.aboutInfo.contactWA}" onchange="updateAbout('contactWA', this.value)" class="w-full border-2 border-slate-200 rounded-xl px-4 py-3 font-bold text-slate-700 outline-none focus:border-brand-purple"></div>
+                    <div class="md:col-span-2"><label class="text-xs font-black text-slate-400 mb-2 block uppercase tracking-wider">Deskripsi Komunitas (About)</label>
+                    <textarea onchange="updateAbout('description', this.value)" class="w-full border-2 border-slate-200 rounded-xl px-4 py-3 font-bold text-slate-700 outline-none focus:border-brand-purple h-24">${appData.aboutInfo.description}</textarea></div>
+                </div>
+            </div></div>`;
             return html;
         }
 
         function updateAbout(field, value) { appData.aboutInfo[field] = value; saveData(); showToast("Tersimpan!"); }
         
         function addPlayer() {
-            appData.players.push({ id: Date.now(), name: 'Pemain Baru', photo: 'images/default.png', mp: 0, w: 0, d: 0, l: 0, gf: 0, ga: 0, pts: 0 });
+            appData.players.push({ id: Date.now(), name: 'Pemain Baru', photo: 'images/default.png' });
             saveData(); renderApp();
         }
         function updatePlayer(index, field, value) {
-            appData.players[index][field] = (field === 'name' || field === 'photo') ? value : Number(value);
+            appData.players[index][field] = value;
             saveData();
         }
         function deletePlayer(index) {
-            openConfirmDialog("Hapus Pemain?", "Data pemain dan statistiknya akan dihapus secara permanen.", () => {
+            openConfirmDialog("Hapus Pemain?", "Data pemain ini akan hilang, tapi riwayat laganya tetap dihitung jika ada.", () => {
                 appData.players.splice(index, 1);
                 saveData(); renderApp();
                 showToast("Pemain dihapus.");
@@ -655,18 +676,18 @@
         function addH2HMatch() {
             const p1 = document.getElementById('new-h2h-p1').value;
             const p2 = document.getElementById('new-h2h-p2').value;
-            const s1 = document.getElementById('new-h2h-s1').value;
-            const s2 = document.getElementById('new-h2h-s2').value;
+            const res = document.getElementById('new-h2h-result').value;
 
-            if(!p1 || !p2 || s1==="" || s2==="") { openAlertDialog("Data Tidak Lengkap", "Harap isi kedua player dan skornya."); return; }
-            if(p1 === p2) { openAlertDialog("Tidak Valid", "Player 1 dan Player 2 tidak boleh sama."); return; }
+            if(!p1 || !p2) { openAlertDialog("Data Tidak Lengkap", "Harap pilih kedua player."); return; }
+            if(p1 === p2) { openAlertDialog("Tidak Valid", "Player 1 dan Player 2 tidak boleh orang yang sama."); return; }
 
-            appData.h2hMatches.push({ id: Date.now(), p1Id: parseInt(p1), p2Id: parseInt(p2), p1Score: parseInt(s1), p2Score: parseInt(s2) });
-            saveData(); renderApp();
-            showToast("Pertandingan H2H dicatat.");
+            appData.h2hMatches.push({ id: Date.now(), p1Id: parseInt(p1), p2Id: parseInt(p2), winner: res, dateStr: new Date().toISOString() });
+            saveData(); 
+            renderApp();
+            showToast("Hasil Laga Tersimpan & Poin Terupdate!");
         }
         function deleteH2HMatch(index) {
-            openConfirmDialog("Hapus Riwayat H2H?", "Riwayat skor ini akan dihapus permanen.", () => {
+            openConfirmDialog("Batalkan Riwayat Tanding?", "Laga ini akan dihapus permanen, dan klasemen akan menghitung ulang otomatis.", () => {
                 appData.h2hMatches.splice(index, 1);
                 saveData(); renderApp();
             });
@@ -677,26 +698,24 @@
         function exportData() {
             const dataStr = JSON.stringify(appData);
             navigator.clipboard.writeText(dataStr).then(() => {
-                openAlertDialog("Data Berhasil Disalin!", "Teks data berhasil di-copy ke clipboard. Simpan teks ini di Notepad sebagai backup, atau paste di HP/Laptop lain.");
+                openAlertDialog("Data Berhasil Disalin!", "Kode data berhasil di-copy. Simpan teks ini di HP lain atau file Note sebagai backup.");
             }).catch(err => {
-                // Fallback for iframe / non-https issues
                 const textArea = document.createElement("textarea");
                 textArea.value = dataStr;
                 document.body.appendChild(textArea);
                 textArea.select();
                 try { document.execCommand('copy'); openAlertDialog("Sukses", "Data disalin."); } 
-                catch (ex) { alert("Gagal menyalin otomatis."); }
+                catch (ex) { alert("Gagal otomatis, salin manual jika perlu."); }
                 document.body.removeChild(textArea);
             });
         }
 
         function importDataPrompt() {
-            // Kita buat form import karena prompt() native jelek dan kurang aman
             let html = `
                 <div class="fixed inset-0 z-[80] bg-black/80 backdrop-blur-sm flex items-center justify-center p-4">
                     <div class="bg-white p-6 rounded-2xl w-full max-w-lg shadow-2xl">
                         <h3 class="font-black text-xl mb-4">Paste Kode Data Anda:</h3>
-                        <textarea id="import-textarea" class="w-full h-32 border-2 border-slate-300 rounded-lg p-2 font-mono text-xs mb-4"></textarea>
+                        <textarea id="import-textarea" class="w-full h-32 border-2 border-slate-300 rounded-lg p-2 font-mono text-xs mb-4" placeholder="Paste panjang teks berawalan {...} disini"></textarea>
                         <div class="flex gap-2">
                             <button onclick="document.getElementById('import-textarea').parentElement.parentElement.remove()" class="flex-1 py-3 bg-slate-200 font-bold rounded-lg hover:bg-slate-300">Batal</button>
                             <button onclick="processImport()" class="flex-1 py-3 bg-brand-purple text-white font-black rounded-lg hover:bg-brand-blue">Proses Import</button>
@@ -711,24 +730,24 @@
             const val = document.getElementById('import-textarea').value;
             try {
                 const parsed = JSON.parse(val);
-                if(parsed && parsed.players) {
+                if(parsed && parsed.players && parsed.h2hMatches) {
                     appData = parsed;
                     saveData();
                     document.getElementById('import-textarea').parentElement.parentElement.remove();
                     renderApp();
-                    openAlertDialog("Berhasil", "Data berhasil di-restore!");
+                    openAlertDialog("Berhasil", "Data baru sukses diterapkan dan klasemen ter-update!");
                 } else throw new Error("Format salah");
             } catch (e) {
-                openAlertDialog("Gagal", "Format data tidak valid!");
+                openAlertDialog("Gagal Import", "Format teks data yang Anda tempel tidak sesuai / corrupt!");
             }
         }
 
         function renderTabs() {
             const tabs = [
-                { id: 'klasemen', label: 'Klasemen', icon: 'fa-list-ol' },
+                { id: 'klasemen', label: 'Klasemen Harian', icon: 'fa-list-ol' },
                 { id: 'h2h', label: 'H2H Stats', icon: 'fa-bolt' },
                 { id: 'winners', label: 'The Winner', icon: 'fa-trophy' },
-                { id: 'about', label: 'About', icon: 'fa-info-circle' },
+                { id: 'about', label: 'Info & Kontak', icon: 'fa-info-circle' },
             ];
 
             let html = '';
