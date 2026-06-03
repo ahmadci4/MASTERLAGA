@@ -50,7 +50,7 @@
       window.OneSignalDeferred = window.OneSignalDeferred || [];
       OneSignalDeferred.push(async function(OneSignal) {
         await OneSignal.init({
-          appId: "MASUKKAN_APP_ID_ONESIGNAL_ANDA_DISINI", // Ganti dengan App ID Anda nanti
+          appId: "f821911e-ae95-4a5c-aed9-12798c4282ab",
           safari_web_id: "",
           notifyButton: { enable: false },
         });
@@ -97,6 +97,23 @@
         </div>
     </div>
 
+    <!-- MODAL RANGKUMAN HARI INI -->
+    <div id="summary-modal" class="fixed inset-0 z-[60] bg-brand-dark/80 backdrop-blur-sm flex items-center justify-center p-4 hidden">
+        <div class="bg-white rounded-3xl shadow-2xl w-full max-w-lg overflow-hidden animate-zoom-in border-4 border-brand-accent">
+            <div class="bg-gradient-to-r from-brand-dark to-brand-blue p-6 text-center text-white relative">
+                <button onclick="closeSummaryModal()" class="absolute top-4 right-4 text-white/50 hover:text-white"><i class="fas fa-times text-xl"></i></button>
+                <h3 class="text-xl font-black tracking-widest mb-1"><i class="fas fa-newspaper text-brand-accent mr-2"></i> RANGKUMAN LAGA HARI INI</h3>
+                <p class="text-xs text-blue-200 font-bold" id="summary-date"></p>
+            </div>
+            <div class="p-6 bg-slate-50 max-h-[60vh] overflow-y-auto custom-scrollbar" id="summary-content">
+                <!-- Isi render dari JS -->
+            </div>
+            <div class="p-4 bg-white border-t border-slate-100 text-center">
+                <button onclick="closeSummaryModal()" class="w-full py-3 bg-slate-200 hover:bg-slate-300 text-slate-700 font-black rounded-xl transition-colors">TUTUP</button>
+            </div>
+        </div>
+    </div>
+
     <header class="bg-brand-dark text-white shadow-xl relative z-10 border-b-4 border-brand-accent">
         <!-- Decorative Background Elements -->
         <div class="absolute inset-0 overflow-hidden pointer-events-none opacity-20">
@@ -118,6 +135,10 @@
                 </div>
                 
                 <div class="flex items-center gap-3">
+                    <button onclick="showSummaryModal()" class="flex items-center gap-2 px-4 py-2 rounded-xl text-sm font-black transition-all shadow-lg bg-brand-blue text-white hover:bg-blue-600 transform hover:-translate-y-0.5">
+                        <i class="fas fa-list-alt"></i>
+                        <span class="hidden md:inline">HASIL HARI INI</span>
+                    </button>
                     <button onclick="subscribeOneSignal()" id="btn-subscribe" class="hidden sm:flex items-center gap-2 px-4 py-2 rounded-xl text-sm font-black transition-all shadow-lg bg-brand-accent text-brand-dark hover:bg-yellow-300 transform hover:-translate-y-0.5">
                         <i class="fas fa-bell animate-bounce" id="bell-icon"></i>
                         <span id="subscribe-text">LANGGANAN NOTIF</span>
@@ -742,6 +763,55 @@
             }
         }
 
+        // FUNGSI RANGKUMAN HARI INI
+        function showSummaryModal() {
+            const today = new Date().toLocaleDateString('id-ID', { weekday: 'long', year: 'numeric', month: 'long', day: 'numeric' });
+            document.getElementById('summary-date').innerText = today;
+
+            const todayStr = new Date().toLocaleDateString();
+            // Filter match yang HANYA hari ini saja
+            const todaysMatches = appData.h2hMatches.filter(m => new Date(m.dateStr).toLocaleDateString() === todayStr);
+
+            let html = '';
+            if (todaysMatches.length === 0) {
+                html = `<div class="text-center p-8"><i class="fas fa-box-open text-5xl text-slate-300 mb-4"></i><p class="font-bold text-slate-500">Belum ada pertandingan yang dimainkan hari ini.</p></div>`;
+            } else {
+                html = `<div class="space-y-3">`;
+                todaysMatches.slice().reverse().forEach(m => {
+                    const p1 = appData.players.find(p => p.id === m.p1Id)?.name || 'Unknown';
+                    const p2 = appData.players.find(p => p.id === m.p2Id)?.name || 'Unknown';
+                    
+                    let resultBadge = '';
+                    let p1Style = 'text-slate-600', p2Style = 'text-slate-600';
+
+                    if(m.winner === 'p1') {
+                        resultBadge = `<span class="bg-brand-blue text-white px-2 py-1 rounded text-[10px] font-black shadow">WIN</span>`;
+                        p1Style = 'text-brand-blue font-black text-sm sm:text-lg';
+                    } else if(m.winner === 'p2') {
+                        resultBadge = `<span class="bg-brand-blue text-white px-2 py-1 rounded text-[10px] font-black shadow">WIN</span>`;
+                        p2Style = 'text-brand-blue font-black text-sm sm:text-lg';
+                    } else {
+                        resultBadge = `<span class="bg-slate-300 text-slate-700 px-2 py-1 rounded text-[10px] font-black">SERI</span>`;
+                    }
+
+                    html += `
+                    <div class="bg-white border border-slate-200 rounded-xl p-4 flex items-center justify-between shadow-sm">
+                        <div class="flex-1 text-right font-bold truncate ${p1Style} pr-3">${p1}</div>
+                        <div class="shrink-0 text-center w-16">${resultBadge}</div>
+                        <div class="flex-1 text-left font-bold truncate ${p2Style} pl-3">${p2}</div>
+                    </div>`;
+                });
+                html += `</div>`;
+            }
+
+            document.getElementById('summary-content').innerHTML = html;
+            document.getElementById('summary-modal').classList.remove('hidden');
+        }
+
+        function closeSummaryModal() {
+            document.getElementById('summary-modal').classList.add('hidden');
+        }
+
         function renderTabs() {
             const tabs = [
                 { id: 'klasemen', label: 'Klasemen Harian', icon: 'fa-list-ol' },
@@ -790,7 +860,17 @@
             else if (activeTab === 'admin' && isAdminLoggedIn) contentDiv.innerHTML = renderAdminDashboard();
         }
 
-        window.onload = renderApp;
+        window.onload = function() {
+            renderApp();
+            
+            // CEK URL UNTUK TRIGGER POP-UP OTOMATIS (KHUSUS DARI NOTIFIKASI)
+            const urlParams = new URLSearchParams(window.location.search);
+            if (urlParams.get('view') === 'hari-ini') {
+                setTimeout(() => {
+                    showSummaryModal();
+                }, 500); // Tunda sedikit agar halaman termuat sempurna dulu
+            }
+        };
     </script>
 </body>
 </html>
