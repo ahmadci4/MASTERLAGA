@@ -43,11 +43,16 @@
     <script>
       window.OneSignalDeferred = window.OneSignalDeferred || [];
       OneSignalDeferred.push(async function(OneSignal) {
-        await OneSignal.init({
-          appId: "f821911e-ae95-4a5c-aed9-12798c4282ab",
-          safari_web_id: "",
-          notifyButton: { enable: false },
-        });
+        try {
+            await OneSignal.init({
+              appId: "f821911e-ae95-4a5c-aed9-12798c4282ab",
+              safari_web_id: "",
+              notifyButton: { enable: false },
+            });
+        } catch(error) {
+            // Mencegah error muncul di layar preview Canvas
+            console.warn("OneSignal hanya dapat diinisialisasi di domain github Anda:", error);
+        }
       });
     </script>
 </head>
@@ -299,7 +304,7 @@
 
 
         // ==========================================
-        // SEMUA FUNGSI UI DIBAWAH (SAMA DENGAN SEBELUMNYA)
+        // SEMUA FUNGSI UI DIBAWAH 
         // Diikat ke objek 'window' agar bisa dipanggil dari HTML
         // ==========================================
 
@@ -506,15 +511,24 @@
             );
 
             let p1Wins = 0, p2Wins = 0, draws = 0;
+            let p1Shames = 0, p2Shames = 0;
+
             matches.forEach(m => {
                 if (m.p1Id === p1Id) {
-                    if(m.winner === 'p1') p1Wins++; else if(m.winner === 'p2') p2Wins++; else draws++;
+                    if(m.winner === 'p1') { p1Wins++; if(m.shame) p1Shames++; }
+                    else if(m.winner === 'p2') { p2Wins++; if(m.shame) p2Shames++; }
+                    else draws++;
                 } else {
-                    if(m.winner === 'p1') p2Wins++; else if(m.winner === 'p2') p1Wins++; else draws++;
+                    if(m.winner === 'p1') { p2Wins++; if(m.shame) p2Shames++; }
+                    else if(m.winner === 'p2') { p1Wins++; if(m.shame) p1Shames++; }
+                    else draws++;
                 }
             });
 
             const totalMatches = matches.length;
+            let p1ShameText = p1Shames > 0 ? `<div class="text-[10px] text-purple-600 font-bold mt-1"><i class="fas fa-skull"></i> ${p1Shames}x Mempermalukan Lawan</div>` : '';
+            let p2ShameText = p2Shames > 0 ? `<div class="text-[10px] text-purple-600 font-bold mt-1"><i class="fas fa-skull"></i> ${p2Shames}x Mempermalukan Lawan</div>` : '';
+
             let html = `
             <div class="bg-white rounded-2xl border border-slate-200 p-6 sm:p-8 shadow-sm">
                 <h3 class="text-center font-black text-slate-800 text-xl mb-8 uppercase tracking-widest border-b border-slate-100 pb-4">Telah Bertemu: <span class="text-brand-blue">${totalMatches}</span> Kali</h3>
@@ -527,9 +541,15 @@
                     <div class="bg-rose-500 h-full" style="width: ${totalMatches===0?0: (p2Wins/totalMatches)*100}%"></div>
                 </div>
                 <div class="flex justify-between items-center text-sm font-bold bg-slate-50 p-4 rounded-xl border border-slate-100">
-                    <div class="w-1/3 text-brand-blue text-3xl font-black">${p1Wins}</div>
+                    <div class="w-1/3 text-left">
+                        <div class="text-brand-blue text-3xl font-black">${p1Wins}</div>
+                        ${p1ShameText}
+                    </div>
                     <div class="w-1/3 text-center text-slate-400 uppercase tracking-widest text-[10px]">Dominasi (Win Rate)</div>
-                    <div class="w-1/3 text-right text-rose-500 text-3xl font-black">${p2Wins}</div>
+                    <div class="w-1/3 text-right">
+                        <div class="text-rose-500 text-3xl font-black">${p2Wins}</div>
+                        ${p2ShameText}
+                    </div>
                 </div>
             </div>`;
 
@@ -601,45 +621,23 @@
                     <button onclick="window.handleLogout()" class="relative z-10 px-8 py-4 bg-rose-500 text-white font-black rounded-xl hover:bg-rose-600 shadow-lg shadow-rose-500/30 transition-transform transform hover:-translate-y-1 tracking-widest text-sm">LOGOUT</button>
                 </div>
 
-                <!-- DAFTAR PEMAIN -->
-                <div class="bg-white p-8 rounded-3xl shadow-xl border border-slate-100 overflow-hidden">
-                    <div class="flex flex-col sm:flex-row justify-between items-start sm:items-center mb-6 gap-4">
-                        <div>
-                            <h3 class="text-xl font-black text-slate-800 flex items-center gap-3"><i class="fas fa-users text-emerald-500"></i> Kelola Player Terdaftar</h3>
-                        </div>
-                        <button onclick="window.addPlayer()" class="bg-emerald-500 hover:bg-emerald-600 text-white font-black px-6 py-3 rounded-xl shadow-lg transition-transform transform hover:-translate-y-1 text-sm tracking-widest"><i class="fas fa-plus mr-2"></i> TAMBAH PLAYER</button>
-                    </div>
-                    <div class="overflow-x-auto pb-4">
-                        <table class="w-full text-sm text-left whitespace-nowrap min-w-[500px]">
-                            <thead class="bg-slate-50 text-slate-400 font-black text-xs uppercase tracking-wider border-b border-slate-200">
-                                <tr><th class="p-4 rounded-tl-xl w-1/2">Nama Player</th><th class="p-4 w-1/2">Path Foto (images/...)</th><th class="p-4 text-center rounded-tr-xl w-24">Aksi</th></tr>
-                            </thead>
-                            <tbody class="divide-y divide-slate-100">`;
-            
-            window.appData.players.forEach((p, i) => {
-                html += `
-                <tr class="hover:bg-slate-50/50">
-                    <td class="p-2"><input type="text" value="${p.name}" onchange="window.updatePlayer(${i}, 'name', this.value)" class="w-full border-2 border-slate-200 rounded-lg px-4 py-2 font-bold text-slate-700 outline-none"></td>
-                    <td class="p-2"><input type="text" value="${p.photo}" onchange="window.updatePlayer(${i}, 'photo', this.value)" class="w-full border-2 border-slate-200 rounded-lg px-4 py-2 font-mono text-xs text-slate-500 outline-none"></td>
-                    <td class="p-2 text-center"><button onclick="window.deletePlayer(${i})" class="w-12 h-12 rounded-xl text-rose-500 bg-rose-50 hover:bg-rose-500 hover:text-white transition-colors"><i class="fas fa-trash-alt"></i></button></td>
-                </tr>`;
-            });
-            if(window.appData.players.length === 0) html += `<tr><td colspan="3" class="text-center p-8 text-slate-400 font-bold">Daftar pemain kosong.</td></tr>`;
-
-            html += `</tbody></table></div></div>`;
-
-            // INPUT HASIL TANDING (CEPAT)
-            html += `
+                <!-- INPUT HASIL TANDING (CEPAT) -->
                 <div class="bg-white p-8 rounded-3xl shadow-xl border border-slate-100">
                     <h3 class="text-xl font-black text-slate-800 mb-2 flex items-center gap-3"><i class="fas fa-gamepad text-brand-accent"></i> Input Hasil Pertandingan Harian</h3>
                     
-                    <div class="bg-brand-dark p-6 rounded-2xl border border-slate-700 mb-8 flex flex-col md:flex-row items-center gap-4">
-                        <select id="new-h2h-p1" class="flex-1 w-full border-2 border-slate-700 rounded-xl px-4 py-3 font-bold text-slate-200 bg-slate-800">${pOptions}</select>
-                        <select id="new-h2h-result" class="flex-1 w-full md:flex-none md:w-48 border-2 border-brand-accent rounded-xl px-4 py-3 font-black text-center text-brand-dark bg-brand-accent cursor-pointer">
-                            <option value="p1">Menang (Kiri) 🏆</option><option value="draw">Seri (Draw) 🤝</option><option value="p2">Menang (Kanan) 🏆</option>
-                        </select>
-                        <select id="new-h2h-p2" class="flex-1 w-full border-2 border-slate-700 rounded-xl px-4 py-3 font-bold text-slate-200 bg-slate-800">${pOptions}</select>
-                        <button onclick="window.addH2HMatch()" class="w-full md:w-auto bg-blue-600 hover:bg-blue-500 text-white font-black px-8 py-3 rounded-xl transition-colors"><i class="fas fa-save mr-2"></i> SIMPAN</button>
+                    <div class="bg-brand-dark p-6 rounded-2xl border border-slate-700 mb-8 flex flex-col gap-4">
+                        <div class="flex flex-col md:flex-row items-center gap-4">
+                            <select id="new-h2h-p1" class="flex-1 w-full border-2 border-slate-700 rounded-xl px-4 py-3 font-bold text-slate-200 bg-slate-800">${pOptions}</select>
+                            <select id="new-h2h-result" class="flex-1 w-full md:flex-none md:w-48 border-2 border-brand-accent rounded-xl px-4 py-3 font-black text-center text-brand-dark bg-brand-accent cursor-pointer">
+                                <option value="p1">Menang (Kiri) 🏆</option><option value="draw">Seri (Draw) 🤝</option><option value="p2">Menang (Kanan) 🏆</option>
+                            </select>
+                            <select id="new-h2h-p2" class="flex-1 w-full border-2 border-slate-700 rounded-xl px-4 py-3 font-bold text-slate-200 bg-slate-800">${pOptions}</select>
+                            <button onclick="window.addH2HMatch()" class="w-full md:w-auto bg-blue-600 hover:bg-blue-500 text-white font-black px-8 py-3 rounded-xl transition-colors"><i class="fas fa-save mr-2"></i> SIMPAN</button>
+                        </div>
+                        <div class="flex items-center gap-2 px-2">
+                            <input type="checkbox" id="new-h2h-shame" class="w-5 h-5 accent-purple-600 cursor-pointer">
+                            <label for="new-h2h-shame" class="text-purple-400 font-bold text-sm cursor-pointer select-none"><i class="fas fa-skull mr-1"></i> Selisih 3+ Gol (Pasal Kalah Tidak Terhormat)</label>
+                        </div>
                     </div>
 
                     <div class="space-y-3 max-h-96 overflow-y-auto pr-2 custom-scrollbar">`;
@@ -654,21 +652,59 @@
                 else if(m.winner === 'p2') resultBadge = `<span class="bg-rose-500 text-white px-3 py-1 rounded-md text-[10px] sm:text-xs font-black tracking-widest">KANAN MENANG</span>`;
                 else resultBadge = `<span class="bg-slate-300 text-slate-700 px-3 py-1 rounded-md text-[10px] sm:text-xs font-black tracking-widest">SERI</span>`;
 
+                let shameBadge = m.shame ? `<div class="w-full text-center mt-2"><span class="bg-purple-600 text-white px-3 py-1 rounded-full text-[10px] font-black tracking-widest inline-flex items-center gap-1 shadow-sm"><i class="fas fa-skull"></i> KALAH TIDAK TERHORMAT</span></div>` : '';
+
                 html += `
-                    <div class="flex flex-col sm:flex-row justify-between items-center bg-slate-50 border border-slate-200 p-4 rounded-xl gap-3">
-                        <div class="flex-1 w-full flex justify-between items-center sm:block sm:w-auto">
-                           <div class="font-bold sm:text-right w-full ${m.winner === 'p1' ? 'text-brand-blue' : 'text-slate-500'}">${p1}</div>
+                    <div class="flex flex-col bg-slate-50 border ${m.shame ? 'border-purple-300 bg-purple-50' : 'border-slate-200'} p-4 rounded-xl gap-2">
+                        <div class="flex flex-col sm:flex-row justify-between items-center gap-3">
+                            <div class="flex-1 w-full flex justify-between items-center sm:block sm:w-auto">
+                               <div class="font-bold sm:text-right w-full ${m.winner === 'p1' ? 'text-brand-blue' : 'text-slate-500'}">${p1}</div>
+                            </div>
+                            <div class="shrink-0 text-center w-32">${resultBadge}</div>
+                            <div class="flex-1 w-full flex justify-between items-center sm:block sm:w-auto">
+                               <div class="font-bold sm:text-left w-full ${m.winner === 'p2' ? 'text-rose-500' : 'text-slate-500'}">${p2}</div>
+                            </div>
+                            <button onclick="window.deleteH2HMatch(${actualIndex})" class="text-slate-400 hover:text-rose-500 w-10 h-10 rounded-lg shrink-0"><i class="fas fa-times"></i></button>
                         </div>
-                        <div class="shrink-0 text-center w-32">${resultBadge}</div>
-                        <div class="flex-1 w-full flex justify-between items-center sm:block sm:w-auto">
-                           <div class="font-bold sm:text-left w-full ${m.winner === 'p2' ? 'text-rose-500' : 'text-slate-500'}">${p2}</div>
-                        </div>
-                        <button onclick="window.deleteH2HMatch(${actualIndex})" class="text-slate-400 hover:text-rose-500 w-10 h-10 rounded-lg"><i class="fas fa-times"></i></button>
+                        ${shameBadge}
                     </div>`;
             });
             if(window.appData.h2hMatches.length === 0) html += `<p class="text-center text-slate-400 font-bold py-8 border-2 border-dashed border-slate-200 rounded-xl">Belum ada laga harian dicatat.</p>`;
             
             html += `</div></div>`;
+
+            // DAFTAR PEMAIN
+            html += `
+                <div class="bg-white p-8 rounded-3xl shadow-xl border border-slate-100 overflow-hidden">
+                    <div class="flex flex-col sm:flex-row justify-between items-start sm:items-center mb-6 gap-4">
+                        <div>
+                            <h3 class="text-xl font-black text-slate-800 flex items-center gap-3"><i class="fas fa-users text-emerald-500"></i> Kelola Player Terdaftar</h3>
+                        </div>
+                        <button onclick="window.addPlayer()" class="bg-emerald-500 hover:bg-emerald-600 text-white font-black px-6 py-3 rounded-xl shadow-lg transition-transform transform hover:-translate-y-1 text-sm tracking-widest"><i class="fas fa-plus mr-2"></i> TAMBAH PLAYER</button>
+                    </div>
+                    <div class="overflow-x-auto pb-4">
+                        <table class="w-full text-sm text-left whitespace-nowrap min-w-[500px]">
+                            <thead class="bg-slate-50 text-slate-400 font-black text-xs uppercase tracking-wider border-b border-slate-200">
+                                <tr><th class="p-4 rounded-tl-xl w-1/3">Nama Player</th><th class="p-4 w-1/3">Foto Profil</th><th class="p-4 text-center rounded-tr-xl w-24">Aksi</th></tr>
+                            </thead>
+                            <tbody class="divide-y divide-slate-100">`;
+            
+            window.appData.players.forEach((p, i) => {
+                html += `
+                <tr class="hover:bg-slate-50/50">
+                    <td class="p-2"><input type="text" value="${p.name}" onchange="window.updatePlayer(${i}, 'name', this.value)" class="w-full border-2 border-slate-200 rounded-lg px-4 py-2 font-bold text-slate-700 outline-none"></td>
+                    <td class="p-2">
+                        <div class="flex items-center gap-2">
+                            <img src="${p.photo}" class="w-10 h-10 rounded-full object-cover border-2 border-slate-200 shrink-0" onerror="this.src='https://ui-avatars.com/api/?name=${p.name}&background=random'">
+                            <input type="file" accept="image/*" onchange="window.uploadImage(event, 'player', ${i})" class="text-xs w-full max-w-[200px] file:mr-4 file:py-2 file:px-4 file:rounded-full file:border-0 file:text-xs file:font-semibold file:bg-blue-50 file:text-blue-700 hover:file:bg-blue-100 cursor-pointer">
+                        </div>
+                    </td>
+                    <td class="p-2 text-center"><button onclick="window.deletePlayer(${i})" class="w-12 h-12 rounded-xl text-rose-500 bg-rose-50 hover:bg-rose-500 hover:text-white transition-colors"><i class="fas fa-trash-alt"></i></button></td>
+                </tr>`;
+            });
+            if(window.appData.players.length === 0) html += `<tr><td colspan="3" class="text-center p-8 text-slate-400 font-bold">Daftar pemain kosong.</td></tr>`;
+
+            html += `</tbody></table></div></div>`;
 
             // THE WINNER & PENGATURAN UMUM
             html += `
@@ -682,8 +718,12 @@
                     <span class="font-black text-xs text-brand-dark uppercase bg-yellow-300 px-3 py-1 rounded-md self-start">${w.season}</span>
                     <div><label class="text-[10px] font-bold text-slate-400 uppercase">Nama Juara</label>
                     <input type="text" value="${w.name}" onchange="window.updateWinner(${i}, 'name', this.value)" class="w-full border-2 rounded-lg px-3 py-2 text-sm font-bold"></div>
-                    <div><label class="text-[10px] font-bold text-slate-400 uppercase">Foto (images/..)</label>
-                    <input type="text" value="${w.photo}" onchange="window.updateWinner(${i}, 'photo', this.value)" class="w-full border-2 rounded-lg px-3 py-2 text-xs font-mono"></div>
+                    <div><label class="text-[10px] font-bold text-slate-400 uppercase">Foto Juara</label>
+                    <div class="flex items-center gap-2 mt-1">
+                        <img src="${w.photo}" class="w-10 h-10 rounded-full object-cover border-2 border-slate-200 shrink-0" onerror="this.src='https://ui-avatars.com/api/?name=${w.name}'">
+                        <input type="file" accept="image/*" onchange="window.uploadImage(event, 'winner', ${i})" class="text-[10px] w-full file:mr-2 file:py-1 file:px-3 file:rounded-full file:border-0 file:text-[10px] file:font-semibold file:bg-blue-50 file:text-blue-700 cursor-pointer">
+                    </div>
+                    </div>
                 </div>`;
             });
 
@@ -701,6 +741,31 @@
             return html;
         }
 
+        window.uploadImage = function(event, type, index) {
+            const file = event.target.files[0];
+            if (!file) return;
+            
+            // Batasi ukuran maksimal 300KB
+            if (file.size > 300 * 1024) { 
+                window.openAlertDialog("File Terlalu Besar", "Ukuran foto maksimal 300KB agar aplikasi tetap cepat. Silakan kompres atau crop foto Anda.");
+                event.target.value = '';
+                return;
+            }
+
+            const reader = new FileReader();
+            reader.onload = function(e) {
+                const base64Str = e.target.result;
+                if (type === 'player') {
+                    window.appData.players[index].photo = base64Str;
+                } else if (type === 'winner') {
+                    window.appData.winners[index].photo = base64Str;
+                }
+                window.saveData();
+                window.showToast("Foto berhasil diupload!");
+            };
+            reader.readAsDataURL(file);
+        }
+
         window.updateAbout = function(field, value) { window.appData.aboutInfo[field] = value; window.saveData(); }
         window.addPlayer = function() { window.appData.players.push({ id: Date.now(), name: 'Pemain Baru', photo: 'images/default.png' }); window.saveData(); }
         window.updatePlayer = function(index, field, value) { window.appData.players[index][field] = value; window.saveData(); }
@@ -714,11 +779,12 @@
             const p1 = document.getElementById('new-h2h-p1').value;
             const p2 = document.getElementById('new-h2h-p2').value;
             const res = document.getElementById('new-h2h-result').value;
+            const shame = document.getElementById('new-h2h-shame').checked;
 
             if(!p1 || !p2) { window.openAlertDialog("Data Tidak Lengkap", "Harap pilih kedua player."); return; }
             if(p1 === p2) { window.openAlertDialog("Tidak Valid", "Player 1 dan Player 2 tidak boleh sama."); return; }
 
-            window.appData.h2hMatches.push({ id: Date.now(), p1Id: parseInt(p1), p2Id: parseInt(p2), winner: res, dateStr: new Date().toISOString() });
+            window.appData.h2hMatches.push({ id: Date.now(), p1Id: parseInt(p1), p2Id: parseInt(p2), winner: res, dateStr: new Date().toISOString(), shame: shame });
             window.saveData(); 
         }
         window.deleteH2HMatch = function(index) {
@@ -751,11 +817,16 @@
                     else if(m.winner === 'p2') { resultBadge = `<span class="bg-brand-blue text-white px-2 py-1 rounded text-[10px] font-black shadow">WIN</span>`; p2Style = 'text-brand-blue font-black text-sm sm:text-lg'; } 
                     else { resultBadge = `<span class="bg-slate-300 text-slate-700 px-2 py-1 rounded text-[10px] font-black">SERI</span>`; }
 
+                    let shameBadge = m.shame ? `<div class="w-full text-center mt-1"><span class="bg-purple-600 text-white px-2 py-0.5 rounded text-[8px] font-black tracking-widest inline-flex items-center gap-1 shadow-sm"><i class="fas fa-skull"></i> KALAH TIDAK TERHORMAT</span></div>` : '';
+
                     html += `
-                    <div class="bg-white border border-slate-200 rounded-xl p-4 flex items-center justify-between shadow-sm">
-                        <div class="flex-1 text-right font-bold truncate ${p1Style} pr-3">${p1}</div>
-                        <div class="shrink-0 text-center w-16">${resultBadge}</div>
-                        <div class="flex-1 text-left font-bold truncate ${p2Style} pl-3">${p2}</div>
+                    <div class="bg-white border ${m.shame ? 'border-purple-300 bg-purple-50' : 'border-slate-200'} rounded-xl p-4 flex flex-col shadow-sm">
+                        <div class="flex items-center justify-between w-full">
+                            <div class="flex-1 text-right font-bold truncate ${p1Style} pr-3">${p1}</div>
+                            <div class="shrink-0 text-center w-16">${resultBadge}</div>
+                            <div class="flex-1 text-left font-bold truncate ${p2Style} pl-3">${p2}</div>
+                        </div>
+                        ${shameBadge}
                     </div>`;
                 });
                 html += `</div>`;
