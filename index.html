@@ -184,6 +184,27 @@
         import { getAuth, signInAnonymously, signInWithCustomToken, onAuthStateChanged } from "https://www.gstatic.com/firebasejs/11.6.1/firebase-auth.js";
         import { getFirestore, doc, setDoc, onSnapshot } from "https://www.gstatic.com/firebasejs/11.6.1/firebase-firestore.js";
 
+        // --- DAFTAR LOGO KLUB RESMI EROPA ---
+        // Kita menggunakan link gambar resmi dari Wikimedia (Sangat stabil & ukurannya 0 Bytes di Database)
+        window.officialClubs = [
+            { name: "Real Madrid", url: "https://upload.wikimedia.org/wikipedia/en/thumb/5/56/Real_Madrid_CF.svg/150px-Real_Madrid_CF.svg.png" },
+            { name: "Barcelona", url: "https://upload.wikimedia.org/wikipedia/en/thumb/4/47/FC_Barcelona_%28crest%29.svg/150px-FC_Barcelona_%28crest%29.svg.png" },
+            { name: "Man United", url: "https://upload.wikimedia.org/wikipedia/en/thumb/7/7a/Manchester_United_FC_crest.svg/150px-Manchester_United_FC_crest.svg.png" },
+            { name: "Man City", url: "https://upload.wikimedia.org/wikipedia/en/thumb/e/eb/Manchester_City_FC_badge.svg/150px-Manchester_City_FC_badge.svg.png" },
+            { name: "Arsenal", url: "https://upload.wikimedia.org/wikipedia/en/thumb/5/53/Arsenal_FC.svg/150px-Arsenal_FC.svg.png" },
+            { name: "Chelsea", url: "https://upload.wikimedia.org/wikipedia/en/thumb/c/cc/Chelsea_FC.svg/150px-Chelsea_FC.svg.png" },
+            { name: "Liverpool", url: "https://upload.wikimedia.org/wikipedia/en/thumb/0/0c/Liverpool_FC.svg/150px-Liverpool_FC.svg.png" },
+            { name: "Tottenham", url: "https://upload.wikimedia.org/wikipedia/en/thumb/b/b4/Tottenham_Hotspur.svg/150px-Tottenham_Hotspur.svg.png" },
+            { name: "Bayern Munchen", url: "https://upload.wikimedia.org/wikipedia/commons/thumb/1/1b/FC_Bayern_M%C3%BCnchen_logo_%282017%29.svg/150px-FC_Bayern_M%C3%BCnchen_logo_%282017%29.svg.png" },
+            { name: "BVB Dortmund", url: "https://upload.wikimedia.org/wikipedia/commons/thumb/6/67/Borussia_Dortmund_logo.svg/150px-Borussia_Dortmund_logo.svg.png" },
+            { name: "Inter Milan", url: "https://upload.wikimedia.org/wikipedia/commons/thumb/0/05/FC_Internazionale_Milano_2021.svg/150px-FC_Internazionale_Milano_2021.svg.png" },
+            { name: "AC Milan", url: "https://upload.wikimedia.org/wikipedia/commons/thumb/d/d0/Logo_of_AC_Milan.svg/150px-Logo_of_AC_Milan.svg.png" },
+            { name: "Juventus", url: "https://upload.wikimedia.org/wikipedia/commons/thumb/b/bc/Juventus_FC_2017_icon_%28black%29.svg/150px-Juventus_FC_2017_icon_%28black%29.svg.png" },
+            { name: "AS Roma", url: "https://upload.wikimedia.org/wikipedia/en/thumb/f/f7/AS_Roma_logo_%282017%29.svg/150px-AS_Roma_logo_%282017%29.svg.png" },
+            { name: "Napoli", url: "https://upload.wikimedia.org/wikipedia/commons/thumb/2/2d/SSC_Napoli_2024_%28deep_blue_version%29.svg/150px-SSC_Napoli_2024_%28deep_blue_version%29.svg.png" },
+            { name: "PSG", url: "https://upload.wikimedia.org/wikipedia/en/thumb/a/a7/Paris_Saint-Germain_F.C..svg/150px-Paris_Saint-Germain_F.C..svg.png" }
+        ];
+
         // 2. STATE DATA AWAL (DEFAULT)
         const generateEmptyWinners = () => {
             let w = [];
@@ -214,13 +235,8 @@
         let isCanvasEnv = typeof __firebase_config !== 'undefined';
         
         if (isCanvasEnv) {
-            // Ini agar Preview di layar Canvas AI berjalan lancar
             firebaseConfig = JSON.parse(__firebase_config);
         } else {
-            // ========================================================
-            // !!! PENTING UNTUK GITHUB PAGES !!!
-            // GANTI KODE DI BAWAH INI DENGAN CONFIG DARI FIREBASE ANDA
-            // ========================================================
             firebaseConfig = {
                 apiKey: "AIzaSyDzzWOTIWNumv0rbFkB6Ayl6EmhG_bAN0s",
                 authDomain: "masterlaga-bf34b.firebaseapp.com",
@@ -231,12 +247,11 @@
             };
         }
 
-        // Initialize Firebase
         const app = initializeApp(firebaseConfig);
         const auth = getAuth(app);
         const db = getFirestore(app);
 
-        // 4. KONEKSI & SINKRONISASI DATABASE (REAL-TIME)
+        // 4. KONEKSI & SINKRONISASI DATABASE
         async function connectDatabase() {
             try {
                 if (isCanvasEnv && typeof __initial_auth_token !== 'undefined' && __initial_auth_token) {
@@ -251,43 +266,35 @@
 
             onAuthStateChanged(auth, (user) => {
                 if (user) {
-                    // Tentukan lokasi penyimpanan data (Path Document)
                     let docRef;
                     if (isCanvasEnv) {
                         const appId = typeof __app_id !== 'undefined' ? __app_id : 'masterlaga-db';
                         docRef = doc(db, 'artifacts', appId, 'public', 'data', 'masterlaga_db', 'main_state');
                     } else {
-                        // Path untuk project Firebase Anda sendiri
                         docRef = doc(db, 'masterlaga_db', 'main_state');
                     }
 
-                    // Dengarkan perubahan data secara langsung (Real-Time Listener)
                     onSnapshot(docRef, (docSnap) => {
                         if (docSnap.exists()) {
-                            // Jika ada data di Cloud, pakai data tersebut
                             window.appData = docSnap.data();
                         } else {
-                            // Jika database masih kosong, simpan data default
                             setDoc(docRef, window.appData);
                         }
                         
                         document.getElementById('sync-status').innerHTML = '<i class="fas fa-cloud text-emerald-400"></i> Online (Tersinkronisasi)';
                         window.renderApp();
                         
-                        // Cek URL pop-up notifikasi (Dijalankan setelah data dimuat)
                         const urlParams = new URLSearchParams(window.location.search);
                         if (urlParams.get('view') === 'hari-ini') {
                             setTimeout(() => { window.showSummaryModal(); }, 500);
                         }
-
                     }, (error) => {
                         console.error("Gagal sinkron data:", error);
                         document.getElementById('sync-status').innerHTML = '<i class="fas fa-cloud-showers-heavy text-rose-500"></i> Gagal Sinkron';
                     });
 
-                    // Modifikasi fungsi saveData agar menyimpan ke Firebase, bukan lagi ke LocalStorage
                     window.saveData = function() {
-                        window.renderApp(); // Update layar instan agar terasa cepat
+                        window.renderApp(); 
                         setDoc(docRef, window.appData).then(() => {
                             window.showToast("Tersimpan ke Cloud Database!");
                         }).catch(err => {
@@ -298,14 +305,11 @@
                 }
             });
         }
-
-        // Jalankan koneksi
         connectDatabase();
 
 
         // ==========================================
         // SEMUA FUNGSI UI DIBAWAH 
-        // Diikat ke objek 'window' agar bisa dipanggil dari HTML
         // ==========================================
 
         window.customDialogCallback = null;
@@ -430,7 +434,7 @@
                     <td class="px-5 py-4 text-center font-black ${index === 0 ? 'text-yellow-600 text-xl' : 'text-slate-400'}">${index === 0 ? '<i class="fas fa-crown"></i>' : index + 1}</td>
                     <td class="px-5 py-4 font-bold text-slate-800 flex items-center gap-4">
                         <div class="w-12 h-12 rounded-full bg-slate-200 flex items-center justify-center overflow-hidden border-2 border-white shadow-md shrink-0">
-                            <img src="${p.photo}" alt="${p.name}" class="w-full h-full object-cover" onerror="this.src='https://ui-avatars.com/api/?name=${p.name}&background=0f172a&color=fff'">
+                            <img src="${p.photo}" alt="${p.name}" class="w-full h-full object-contain p-1" onerror="this.src='https://ui-avatars.com/api/?name=${p.name}&background=0f172a&color=fff'">
                         </div>
                         <span class="truncate max-w-[120px] sm:max-w-xs">${p.name}</span>
                     </td>
@@ -569,7 +573,7 @@
                     <div class="relative z-10">
                         <span class="inline-block px-4 py-1.5 bg-brand-dark text-brand-accent font-black rounded-full text-xs mb-6 uppercase tracking-[0.2em] shadow-md">${w.season}</span>
                         <div class="w-32 h-32 mx-auto rounded-full bg-slate-100 border-4 border-brand-accent shadow-2xl overflow-hidden mb-6 group-hover:scale-105 transition-transform">
-                            <img src="${w.photo}" alt="${w.name}" class="w-full h-full object-cover" onerror="this.src='https://ui-avatars.com/api/?name=${w.name}&background=6d28d9&color=fff'">
+                            <img src="${w.photo}" alt="${w.name}" class="w-full h-full object-contain p-2" onerror="this.src='https://ui-avatars.com/api/?name=${w.name}&background=6d28d9&color=fff'">
                         </div>
                         <h3 class="text-2xl font-black text-slate-800 tracking-wide">${w.name}</h3>
                         <div class="mt-3 flex items-center justify-center gap-2 text-brand-accent font-black text-sm uppercase tracking-widest"><i class="fas fa-medal"></i> Champion</div>
@@ -610,6 +614,12 @@
         window.renderAdminDashboard = function() {
             let pOptions = '';
             window.appData.players.forEach(p => { pOptions += `<option value="${p.id}">${p.name}</option>`; });
+            
+            // Build opsi dropdown untuk logo klub dari array officialClubs
+            let clubLogoOptions = '<option value="">-- Pilih Logo Resmi Klub --</option>';
+            window.officialClubs.forEach(club => {
+                clubLogoOptions += `<option value="${club.url}">${club.name}</option>`;
+            });
 
             let html = `
             <div class="space-y-10 bg-transparent rounded-2xl pb-10">
@@ -685,7 +695,7 @@
                     <div class="overflow-x-auto pb-4">
                         <table class="w-full text-sm text-left whitespace-nowrap min-w-[500px]">
                             <thead class="bg-slate-50 text-slate-400 font-black text-xs uppercase tracking-wider border-b border-slate-200">
-                                <tr><th class="p-4 rounded-tl-xl w-1/3">Nama Player</th><th class="p-4 w-1/3">Foto Profil</th><th class="p-4 text-center rounded-tr-xl w-24">Aksi</th></tr>
+                                <tr><th class="p-4 rounded-tl-xl w-1/3">Nama Player</th><th class="p-4 w-1/3">Pengaturan Logo Tim</th><th class="p-4 text-center rounded-tr-xl w-24">Aksi</th></tr>
                             </thead>
                             <tbody class="divide-y divide-slate-100">`;
             
@@ -694,9 +704,18 @@
                 <tr class="hover:bg-slate-50/50">
                     <td class="p-2"><input type="text" value="${p.name}" onchange="window.updatePlayer(${i}, 'name', this.value)" class="w-full border-2 border-slate-200 rounded-lg px-4 py-2 font-bold text-slate-700 outline-none"></td>
                     <td class="p-2">
-                        <div class="flex items-center gap-2">
-                            <img src="${p.photo}" class="w-10 h-10 rounded-full object-cover border-2 border-slate-200 shrink-0" onerror="this.src='https://ui-avatars.com/api/?name=${p.name}&background=random'">
-                            <input type="file" accept="image/*" onchange="window.uploadImage(event, 'player', ${i})" class="text-xs w-full max-w-[200px] file:mr-4 file:py-2 file:px-4 file:rounded-full file:border-0 file:text-xs file:font-semibold file:bg-blue-50 file:text-blue-700 hover:file:bg-blue-100 cursor-pointer">
+                        <div class="flex flex-col gap-2">
+                            <div class="flex items-center gap-2">
+                                <img src="${p.photo}" class="w-10 h-10 rounded-full object-contain border-2 border-slate-200 shrink-0 bg-white p-0.5" onerror="this.src='https://ui-avatars.com/api/?name=${p.name}&background=random'">
+                                <select onchange="window.setClubLogo('player', ${i}, this.value)" class="text-[10px] sm:text-xs font-bold border-2 border-slate-200 text-slate-600 rounded-lg px-2 py-1.5 bg-slate-50 w-full cursor-pointer outline-none hover:border-brand-blue">
+                                    ${clubLogoOptions}
+                                </select>
+                            </div>
+                            <!-- Opsi upload manual kalau tidak pakai logo klub di atas -->
+                            <div class="flex items-center gap-1 text-[10px] text-slate-400">
+                                <i class="fas fa-info-circle"></i> Atau upload manual:
+                                <input type="file" accept="image/*" onchange="window.uploadImage(event, 'player', ${i})" class="text-[10px] w-full max-w-[150px] file:mr-2 file:py-1 file:px-2 file:rounded-md file:border-0 file:bg-slate-200 file:text-slate-600 hover:file:bg-slate-300 cursor-pointer">
+                            </div>
                         </div>
                     </td>
                     <td class="p-2 text-center"><button onclick="window.deletePlayer(${i})" class="w-12 h-12 rounded-xl text-rose-500 bg-rose-50 hover:bg-rose-500 hover:text-white transition-colors"><i class="fas fa-trash-alt"></i></button></td>
@@ -718,11 +737,13 @@
                     <span class="font-black text-xs text-brand-dark uppercase bg-yellow-300 px-3 py-1 rounded-md self-start">${w.season}</span>
                     <div><label class="text-[10px] font-bold text-slate-400 uppercase">Nama Juara</label>
                     <input type="text" value="${w.name}" onchange="window.updateWinner(${i}, 'name', this.value)" class="w-full border-2 rounded-lg px-3 py-2 text-sm font-bold"></div>
-                    <div><label class="text-[10px] font-bold text-slate-400 uppercase">Foto Juara</label>
-                    <div class="flex items-center gap-2 mt-1">
-                        <img src="${w.photo}" class="w-10 h-10 rounded-full object-cover border-2 border-slate-200 shrink-0" onerror="this.src='https://ui-avatars.com/api/?name=${w.name}'">
-                        <input type="file" accept="image/*" onchange="window.uploadImage(event, 'winner', ${i})" class="text-[10px] w-full file:mr-2 file:py-1 file:px-3 file:rounded-full file:border-0 file:text-[10px] file:font-semibold file:bg-blue-50 file:text-blue-700 cursor-pointer">
-                    </div>
+                    <div><label class="text-[10px] font-bold text-slate-400 uppercase mb-1 block">Logo Tim Juara</label>
+                        <div class="flex items-center gap-2 mb-2">
+                            <img src="${w.photo}" class="w-10 h-10 rounded-full object-contain border-2 border-slate-200 shrink-0 bg-white" onerror="this.src='https://ui-avatars.com/api/?name=${w.name}'">
+                            <select onchange="window.setClubLogo('winner', ${i}, this.value)" class="text-[10px] font-bold border-2 border-slate-200 text-slate-600 rounded-lg px-2 py-1.5 bg-white w-full cursor-pointer outline-none">
+                                ${clubLogoOptions}
+                            </select>
+                        </div>
                     </div>
                 </div>`;
             });
@@ -741,13 +762,21 @@
             return html;
         }
 
+        // FUNGSI BARU: Set Logo Otomatis
+        window.setClubLogo = function(type, index, url) {
+            if(!url) return;
+            if(type === 'player') window.appData.players[index].photo = url;
+            if(type === 'winner') window.appData.winners[index].photo = url;
+            window.saveData();
+            window.showToast("Logo berhasil diganti!");
+        }
+
         window.uploadImage = function(event, type, index) {
             const file = event.target.files[0];
             if (!file) return;
             
-            // Batasi ukuran maksimal 300KB
             if (file.size > 300 * 1024) { 
-                window.openAlertDialog("File Terlalu Besar", "Ukuran foto maksimal 300KB agar aplikasi tetap cepat. Silakan kompres atau crop foto Anda.");
+                window.openAlertDialog("File Terlalu Besar", "Ukuran foto maksimal 300KB agar aplikasi tetap cepat. Silakan gunakan opsi 'Pilih Logo Klub' di atasnya jika kepenuhan.");
                 event.target.value = '';
                 return;
             }
