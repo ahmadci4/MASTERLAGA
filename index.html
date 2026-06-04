@@ -182,7 +182,7 @@
         // 2. STATE DATA AWAL (DEFAULT)
         const generateEmptyWinners = () => {
             let w = [];
-            for(let i=1; i<=6; i++) w.push({ id: i, season: `Season ${i}`, name: 'Belum Ada', photo: 'images/default.png' });
+            for(let i=1; i<=6; i++) w.push({ id: i, season: `Season ${i}`, name: 'Belum Ada', photo: 'images/logo.png' });
             return w;
         };
 
@@ -702,7 +702,7 @@
         }
 
         window.updateAbout = function(field, value) { window.appData.aboutInfo[field] = value; window.saveData(); }
-        window.addPlayer = function() { window.appData.players.push({ id: Date.now(), name: 'Pemain Baru', photo: 'images/default.png' }); window.saveData(); }
+        window.addPlayer = function() { window.appData.players.push({ id: Date.now(), name: 'Pemain Baru', photo: 'images/logo.png' }); window.saveData(); }
         window.updatePlayer = function(index, field, value) { window.appData.players[index][field] = value; window.saveData(); }
         window.deletePlayer = function(index) {
             window.openConfirmDialog("Hapus Pemain?", "Data pemain ini akan hilang di cloud.", () => {
