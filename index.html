@@ -184,25 +184,23 @@
         import { getAuth, signInAnonymously, signInWithCustomToken, onAuthStateChanged } from "https://www.gstatic.com/firebasejs/11.6.1/firebase-auth.js";
         import { getFirestore, doc, setDoc, onSnapshot } from "https://www.gstatic.com/firebasejs/11.6.1/firebase-firestore.js";
 
-        // --- DAFTAR LOGO KLUB RESMI EROPA ---
-        // Kita menggunakan link gambar resmi dari Wikimedia (Sangat stabil & ukurannya 0 Bytes di Database)
+        // --- DAFTAR LOGO KLUB LOKAL (Sesuai folder images Anda) ---
         window.officialClubs = [
-            { name: "Real Madrid", url: "https://upload.wikimedia.org/wikipedia/en/thumb/5/56/Real_Madrid_CF.svg/150px-Real_Madrid_CF.svg.png" },
-            { name: "Barcelona", url: "https://upload.wikimedia.org/wikipedia/en/thumb/4/47/FC_Barcelona_%28crest%29.svg/150px-FC_Barcelona_%28crest%29.svg.png" },
-            { name: "Man United", url: "https://upload.wikimedia.org/wikipedia/en/thumb/7/7a/Manchester_United_FC_crest.svg/150px-Manchester_United_FC_crest.svg.png" },
-            { name: "Man City", url: "https://upload.wikimedia.org/wikipedia/en/thumb/e/eb/Manchester_City_FC_badge.svg/150px-Manchester_City_FC_badge.svg.png" },
-            { name: "Arsenal", url: "https://upload.wikimedia.org/wikipedia/en/thumb/5/53/Arsenal_FC.svg/150px-Arsenal_FC.svg.png" },
-            { name: "Chelsea", url: "https://upload.wikimedia.org/wikipedia/en/thumb/c/cc/Chelsea_FC.svg/150px-Chelsea_FC.svg.png" },
-            { name: "Liverpool", url: "https://upload.wikimedia.org/wikipedia/en/thumb/0/0c/Liverpool_FC.svg/150px-Liverpool_FC.svg.png" },
-            { name: "Tottenham", url: "https://upload.wikimedia.org/wikipedia/en/thumb/b/b4/Tottenham_Hotspur.svg/150px-Tottenham_Hotspur.svg.png" },
-            { name: "Bayern Munchen", url: "https://upload.wikimedia.org/wikipedia/commons/thumb/1/1b/FC_Bayern_M%C3%BCnchen_logo_%282017%29.svg/150px-FC_Bayern_M%C3%BCnchen_logo_%282017%29.svg.png" },
-            { name: "BVB Dortmund", url: "https://upload.wikimedia.org/wikipedia/commons/thumb/6/67/Borussia_Dortmund_logo.svg/150px-Borussia_Dortmund_logo.svg.png" },
-            { name: "Inter Milan", url: "https://upload.wikimedia.org/wikipedia/commons/thumb/0/05/FC_Internazionale_Milano_2021.svg/150px-FC_Internazionale_Milano_2021.svg.png" },
-            { name: "AC Milan", url: "https://upload.wikimedia.org/wikipedia/commons/thumb/d/d0/Logo_of_AC_Milan.svg/150px-Logo_of_AC_Milan.svg.png" },
-            { name: "Juventus", url: "https://upload.wikimedia.org/wikipedia/commons/thumb/b/bc/Juventus_FC_2017_icon_%28black%29.svg/150px-Juventus_FC_2017_icon_%28black%29.svg.png" },
-            { name: "AS Roma", url: "https://upload.wikimedia.org/wikipedia/en/thumb/f/f7/AS_Roma_logo_%282017%29.svg/150px-AS_Roma_logo_%282017%29.svg.png" },
-            { name: "Napoli", url: "https://upload.wikimedia.org/wikipedia/commons/thumb/2/2d/SSC_Napoli_2024_%28deep_blue_version%29.svg/150px-SSC_Napoli_2024_%28deep_blue_version%29.svg.png" },
-            { name: "PSG", url: "https://upload.wikimedia.org/wikipedia/en/thumb/a/a7/Paris_Saint-Germain_F.C..svg/150px-Paris_Saint-Germain_F.C..svg.png" }
+            { name: "AC Milan", url: "images/acmilan.svg" },
+            { name: "Arsenal", url: "images/arsenal.png" },
+            { name: "AS Roma", url: "images/asroma.svg" },
+            { name: "Atletico Madrid", url: "images/atletico.png" },
+            { name: "Barcelona", url: "images/barcelona.png" },
+            { name: "Chelsea", url: "images/chelsea.png" },
+            { name: "Man City", url: "images/city.png" },
+            { name: "Juventus", url: "images/juventus.svg" },
+            { name: "Liverpool", url: "images/liverpool.png" },
+            { name: "Man United", url: "images/mu.png" },
+            { name: "Bayern Munchen", url: "images/munchen.png" },
+            { name: "Napoli", url: "images/napoli.svg" },
+            { name: "PSG", url: "images/psg.png" },
+            { name: "Real Madrid", url: "images/realmadrid.png" },
+            { name: "Tottenham", url: "images/totenham.png" }
         ];
 
         // 2. STATE DATA AWAL (DEFAULT)
