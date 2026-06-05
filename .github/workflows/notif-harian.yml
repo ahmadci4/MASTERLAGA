@@ -2,9 +2,8 @@ name: Kirim Notifikasi Harian
 
 on:
   schedule:
-    # Mengatur waktu kirim (Contoh: Jam 10:00 WITA / 02:00 UTC setiap hari)
-    - cron: '0 2 * * *'
-  workflow_dispatch: # Tombol ini untuk mengetes manual kapan saja
+    # Mengatur waktu kirim (Jam 00:00 WITA / 16:00 UTC setiap hari)
+    - cron: '0 16 * * *'
 
 jobs:
   kirim-notif:
