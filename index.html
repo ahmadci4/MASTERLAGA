@@ -50,7 +50,6 @@
               notifyButton: { enable: false },
             });
         } catch(error) {
-            // Mencegah error muncul di layar preview Canvas
             console.warn("OneSignal hanya dapat diinisialisasi di domain github Anda:", error);
         }
       });
@@ -59,13 +58,13 @@
 <body class="pb-12 overflow-x-hidden relative text-slate-800">
 
     <!-- TOAST NOTIFICATION -->
-    <div id="toast" class="fixed top-4 left-1/2 transform -translate-x-1/2 z-[60] bg-brand-dark text-white px-6 py-3 rounded-full shadow-2xl items-center gap-3 animate-fade-in-down border border-slate-700 hidden">
+    <div id="toast" class="fixed top-4 left-1/2 transform -translate-x-1/2 z-[90] bg-brand-dark text-white px-6 py-3 rounded-full shadow-2xl items-center gap-3 animate-fade-in-down border border-slate-700 hidden">
         <i class="fas fa-check-circle text-green-400"></i>
         <span id="toast-msg" class="font-semibold text-sm">Berhasil</span>
     </div>
 
     <!-- CUSTOM CONFIRM/ALERT DIALOG -->
-    <div id="custom-dialog" class="fixed inset-0 z-[70] bg-black/70 backdrop-blur-sm flex items-center justify-center p-4 hidden">
+    <div id="custom-dialog" class="fixed inset-0 z-[100] bg-black/70 backdrop-blur-sm flex items-center justify-center p-4 hidden">
         <div class="bg-white rounded-2xl shadow-2xl w-full max-w-sm overflow-hidden animate-zoom-in border border-slate-200">
             <div class="p-6 text-center">
                 <div class="w-16 h-16 rounded-full bg-red-100 text-red-600 flex items-center justify-center mx-auto mb-4" id="dialog-icon-container">
@@ -82,7 +81,7 @@
     </div>
 
     <!-- ADMIN LOGIN MODAL -->
-    <div id="admin-modal" class="fixed inset-0 z-50 bg-brand-dark/80 backdrop-blur-md flex items-center justify-center p-4 hidden">
+    <div id="admin-modal" class="fixed inset-0 z-[60] bg-brand-dark/80 backdrop-blur-md flex items-center justify-center p-4 hidden">
         <div class="bg-white rounded-3xl shadow-2xl w-full max-w-sm overflow-hidden animate-zoom-in border-4 border-brand-purple/20">
             <div class="bg-gradient-to-br from-brand-purple to-brand-blue p-8 text-center text-white relative">
                 <button onclick="window.closeAdminModal()" class="absolute top-4 right-4 text-white/50 hover:text-white"><i class="fas fa-times text-xl"></i></button>
@@ -92,6 +91,52 @@
             <div class="p-8 bg-slate-50">
                 <input type="password" id="admin-password-input" placeholder="Masukkan Sandi..." class="w-full border-2 border-slate-200 rounded-xl px-4 py-3 mb-6 focus:border-brand-purple focus:outline-none transition-colors text-center font-bold tracking-widest text-lg shadow-inner" autofocus>
                 <button onclick="window.handleLogin()" class="w-full bg-brand-purple hover:bg-brand-blue text-white font-black py-4 rounded-xl shadow-lg shadow-brand-purple/30 transition-all transform hover:-translate-y-1">MASUK SISTEM</button>
+            </div>
+        </div>
+    </div>
+
+    <!-- MODAL PINTASAN INPUT VS (QUICK MATCH) -->
+    <div id="quick-modal" class="fixed inset-0 z-[80] bg-brand-dark/90 backdrop-blur-md flex items-center justify-center p-4 hidden">
+        <div class="bg-white rounded-3xl shadow-2xl w-full max-w-md overflow-hidden animate-zoom-in border-4 border-brand-accent">
+            <div class="bg-gradient-to-r from-brand-dark to-brand-blue p-6 text-center text-white relative">
+                <button onclick="window.closeQuickInput()" class="absolute top-4 right-4 text-white/50 hover:text-white"><i class="fas fa-times text-xl"></i></button>
+                <h3 class="text-xl font-black tracking-widest"><i class="fas fa-bolt text-brand-accent mr-2"></i> INPUT CEPAT (VS)</h3>
+            </div>
+            
+            <!-- Section 1: PIN Input -->
+            <div id="quick-pin-section" class="p-8 bg-slate-50 text-center">
+                <p class="text-sm text-slate-500 font-bold mb-4">Masukkan Kode PIN Pintasan</p>
+                <input type="password" id="quick-pin-input" placeholder="***" class="w-2/3 mx-auto border-2 border-slate-300 rounded-xl px-4 py-4 mb-6 focus:border-brand-blue focus:outline-none transition-colors text-center font-black tracking-widest text-3xl shadow-inner block" maxlength="6">
+                <button onclick="window.verifyQuickPin()" class="w-full bg-brand-blue hover:bg-blue-600 text-white font-black py-4 rounded-xl shadow-lg transition-all transform hover:-translate-y-1">MASUK</button>
+            </div>
+
+            <!-- Section 2: Input Form -->
+            <div id="quick-form-section" class="p-6 bg-slate-50 hidden">
+                <div class="flex flex-col gap-4">
+                    <label class="text-[10px] font-black text-slate-400 uppercase tracking-wider text-center -mb-2">PLAYER 1 (ATAS)</label>
+                    <select id="quick-p1" class="w-full border-2 border-slate-300 rounded-xl px-4 py-3 font-bold text-brand-dark bg-white outline-none focus:border-brand-blue"></select>
+                    
+                    <div class="flex items-center justify-center -my-3 relative z-10">
+                        <span class="bg-brand-accent text-brand-dark font-black px-3 py-1 rounded-full text-xs border-2 border-white shadow-sm uppercase tracking-widest">Lawan</span>
+                    </div>
+                    
+                    <select id="quick-p2" class="w-full border-2 border-slate-300 rounded-xl px-4 py-3 font-bold text-brand-dark bg-white outline-none focus:border-rose-500"></select>
+                    <label class="text-[10px] font-black text-slate-400 mt-1 uppercase tracking-wider text-center -mb-2">PLAYER 2 (BAWAH)</label>
+
+                    <label class="text-[10px] font-black text-slate-400 mt-4 uppercase tracking-wider text-center">HASIL AKHIR</label>
+                    <select id="quick-result" class="w-full border-2 border-brand-accent rounded-xl px-4 py-3 font-black text-center text-brand-dark bg-brand-accent cursor-pointer outline-none">
+                        <option value="p1">Pemain Atas Menang 🏆</option>
+                        <option value="draw">Seri (Draw) 🤝</option>
+                        <option value="p2">Pemain Bawah Menang 🏆</option>
+                    </select>
+
+                    <div class="flex items-center gap-2 mt-2 bg-purple-50 p-3 rounded-xl border border-purple-200">
+                        <input type="checkbox" id="quick-shame" class="w-5 h-5 accent-purple-600 cursor-pointer">
+                        <label for="quick-shame" class="text-purple-700 font-bold text-xs cursor-pointer select-none leading-tight"><i class="fas fa-skull mr-1"></i> Selisih 3+ Gol (Kalah Tidak Terhormat)</label>
+                    </div>
+
+                    <button onclick="window.submitQuickMatch()" class="w-full mt-4 bg-emerald-500 hover:bg-emerald-600 text-white font-black py-4 rounded-xl shadow-lg transition-all transform hover:-translate-y-1"><i class="fas fa-save mr-2"></i> SIMPAN HASIL</button>
+                </div>
             </div>
         </div>
     </div>
@@ -175,6 +220,11 @@
         </div>
     </main>
 
+    <!-- TOMBOL PINTASAN VS (MENGAMBANG) -->
+    <button onclick="window.openQuickInput()" class="fixed bottom-6 right-6 z-[45] bg-brand-accent text-brand-dark px-5 py-4 rounded-full shadow-2xl shadow-brand-accent/50 flex items-center gap-2 hover:scale-110 transition-transform font-black border-4 border-white outline-none">
+        <i class="fas fa-plus"></i> <span class="text-lg">VS</span>
+    </button>
+
     <!-- ==========================================
          LOGIKA APLIKASI & FIREBASE INTEGRATION
          ========================================== -->
@@ -212,6 +262,7 @@
 
         const defaultData = {
             adminPassword: "admin004",
+            quickInputPassword: "004", // Sandi khusus tombol VS
             players: [], 
             h2hMatches: [], 
             winners: generateEmptyWinners(),
@@ -359,6 +410,58 @@
             btn.className = "hidden lg:flex items-center gap-2 px-4 py-2 rounded-xl text-sm font-black transition-all shadow-md bg-green-500/20 text-green-400 border border-green-500/30 cursor-default";
             document.getElementById('bell-icon').classList.remove('animate-bounce');
             document.getElementById('subscribe-text').innerText = "NOTIF AKTIF";
+        }
+
+        // --- FUNGSI PINTASAN INPUT (VS) BARU ---
+        window.openQuickInput = function() {
+            document.getElementById('quick-modal').classList.remove('hidden');
+            document.getElementById('quick-pin-section').classList.remove('hidden');
+            document.getElementById('quick-form-section').classList.add('hidden');
+            document.getElementById('quick-pin-input').value = '';
+            setTimeout(() => document.getElementById('quick-pin-input').focus(), 100);
+        }
+
+        window.closeQuickInput = function() {
+            document.getElementById('quick-modal').classList.add('hidden');
+        }
+
+        window.verifyQuickPin = function() {
+            const pin = document.getElementById('quick-pin-input').value;
+            const validPin = window.appData.quickInputPassword || "004";
+            
+            if (pin === validPin) {
+                document.getElementById('quick-pin-section').classList.add('hidden');
+                document.getElementById('quick-form-section').classList.remove('hidden');
+
+                // Siapkan daftar pemain
+                let pOptions = '<option value="">-- Pilih Pemain --</option>';
+                window.appData.players.forEach(p => { pOptions += `<option value="${p.id}">${p.name}</option>`; });
+                document.getElementById('quick-p1').innerHTML = pOptions;
+                document.getElementById('quick-p2').innerHTML = pOptions;
+            } else {
+                window.openAlertDialog("Akses Ditolak", "Kode PIN yang dimasukkan salah!");
+            }
+        }
+
+        window.submitQuickMatch = function() {
+            const p1 = document.getElementById('quick-p1').value;
+            const p2 = document.getElementById('quick-p2').value;
+            const res = document.getElementById('quick-result').value;
+            const shame = document.getElementById('quick-shame').checked;
+
+            if(!p1 || !p2) { window.openAlertDialog("Data Tidak Lengkap", "Harap pilih kedua pemain."); return; }
+            if(p1 === p2) { window.openAlertDialog("Tidak Valid", "Player 1 dan Player 2 tidak boleh sama."); return; }
+
+            window.appData.h2hMatches.push({ id: Date.now(), p1Id: parseInt(p1), p2Id: parseInt(p2), winner: res, dateStr: new Date().toISOString(), shame: shame });
+            window.saveData(); 
+
+            window.showToast("Hasil pertandingan berhasil disimpan!");
+            
+            // Reset form agar siap diisi pertandingan berikutnya
+            document.getElementById('quick-p1').value = '';
+            document.getElementById('quick-p2').value = '';
+            document.getElementById('quick-result').value = 'p1';
+            document.getElementById('quick-shame').checked = false;
         }
 
         window.toggleAdminPanel = function() {
@@ -613,11 +716,13 @@
             let pOptions = '';
             window.appData.players.forEach(p => { pOptions += `<option value="${p.id}">${p.name}</option>`; });
             
-            // Build opsi dropdown untuk logo klub dari array officialClubs
             let clubLogoOptions = '<option value="">-- Pilih Logo Resmi Klub --</option>';
             window.officialClubs.forEach(club => {
                 clubLogoOptions += `<option value="${club.url}">${club.name}</option>`;
             });
+
+            // Fallback jika belum pernah diset sebelumnya
+            const quickPin = window.appData.quickInputPassword || '004';
 
             let html = `
             <div class="space-y-10 bg-transparent rounded-2xl pb-10">
@@ -709,7 +814,6 @@
                                     ${clubLogoOptions}
                                 </select>
                             </div>
-                            <!-- Opsi upload manual kalau tidak pakai logo klub di atas -->
                             <div class="flex items-center gap-1 text-[10px] text-slate-400">
                                 <i class="fas fa-info-circle"></i> Atau upload manual:
                                 <input type="file" accept="image/*" onchange="window.uploadImage(event, 'player', ${i})" class="text-[10px] w-full max-w-[150px] file:mr-2 file:py-1 file:px-2 file:rounded-md file:border-0 file:bg-slate-200 file:text-slate-600 hover:file:bg-slate-300 cursor-pointer">
@@ -749,10 +853,15 @@
             html += `</div>
                 <h3 class="text-xl font-black text-slate-800 mb-6 flex items-center gap-3 border-t border-slate-100 pt-8"><i class="fas fa-info-circle text-brand-purple"></i> Pengaturan Aplikasi</h3>
                 <div class="grid grid-cols-1 md:grid-cols-2 gap-6">
-                    <div><label class="text-xs font-black text-slate-400 block uppercase">Password Admin Baru</label>
+                    <div><label class="text-xs font-black text-slate-400 block uppercase">Password Admin Master</label>
                     <input type="text" value="${window.appData.adminPassword}" onchange="window.updateAbout('adminPassword', this.value)" class="w-full border-2 rounded-xl px-4 py-3 font-bold text-brand-purple"></div>
+                    
+                    <div><label class="text-xs font-black text-brand-accent block uppercase">PIN Tombol Pintas VS (Cepat)</label>
+                    <input type="text" value="${quickPin}" onchange="window.updateAbout('quickInputPassword', this.value)" class="w-full border-2 rounded-xl px-4 py-3 font-bold text-brand-dark"></div>
+
                     <div><label class="text-xs font-black text-slate-400 block uppercase">Nomor WA Admin (62...)</label>
                     <input type="text" value="${window.appData.aboutInfo.contactWA}" onchange="window.updateAbout('contactWA', this.value)" class="w-full border-2 rounded-xl px-4 py-3 font-bold text-slate-700"></div>
+                    
                     <div class="md:col-span-2"><label class="text-xs font-black text-slate-400 block uppercase">Deskripsi Komunitas (About)</label>
                     <textarea onchange="window.updateAbout('description', this.value)" class="w-full border-2 rounded-xl px-4 py-3 font-bold text-slate-700 h-24">${window.appData.aboutInfo.description}</textarea></div>
                 </div>
@@ -760,7 +869,6 @@
             return html;
         }
 
-        // FUNGSI BARU: Set Logo Otomatis
         window.setClubLogo = function(type, index, url) {
             if(!url) return;
             if(type === 'player') window.appData.players[index].photo = url;
@@ -793,7 +901,16 @@
             reader.readAsDataURL(file);
         }
 
-        window.updateAbout = function(field, value) { window.appData.aboutInfo[field] = value; window.saveData(); }
+        window.updateAbout = function(field, value) { 
+            if(field === 'adminPassword' || field === 'quickInputPassword') {
+                window.appData[field] = value;
+            } else {
+                window.appData.aboutInfo[field] = value; 
+            }
+            window.saveData(); 
+            window.showToast("Pengaturan berhasil disimpan!");
+        }
+        
         window.addPlayer = function() { window.appData.players.push({ id: Date.now(), name: 'Pemain Baru', photo: 'images/default.png' }); window.saveData(); }
         window.updatePlayer = function(index, field, value) { window.appData.players[index][field] = value; window.saveData(); }
         window.deletePlayer = function(index) {
