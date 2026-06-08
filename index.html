@@ -693,7 +693,9 @@
                     w: parseInt(p.manualW) || 0, 
                     d: parseInt(p.manualD) || 0, 
                     l: parseInt(p.manualL) || 0, 
-                    pts: parseInt(p.manualPts) || 0 
+                    pts: parseInt(p.manualPts) || 0,
+                    gf: parseInt(p.manualGf) || 0,
+                    ga: parseInt(p.manualGa) || 0
                 }; 
             });
 
@@ -701,6 +703,14 @@
                 if(!stats[m.p1Id] || !stats[m.p2Id]) return;
                 stats[m.p1Id].mp++; stats[m.p2Id].mp++;
                 
+                let p1S = parseInt(m.p1Score) || 0;
+                let p2S = parseInt(m.p2Score) || 0;
+                
+                stats[m.p1Id].gf += p1S;
+                stats[m.p1Id].ga += p2S;
+                stats[m.p2Id].gf += p2S;
+                stats[m.p2Id].ga += p1S;
+
                 if (m.winner === 'p1') { stats[m.p1Id].w++; stats[m.p1Id].pts += 3; stats[m.p2Id].l++; } 
                 else if (m.winner === 'p2') { stats[m.p2Id].w++; stats[m.p2Id].pts += 3; stats[m.p1Id].l++; } 
                 else if (m.winner === 'draw') { stats[m.p1Id].d++; stats[m.p1Id].pts += 1; stats[m.p2Id].d++; stats[m.p2Id].pts += 1; }
@@ -709,7 +719,11 @@
             return Object.values(stats).sort((a, b) => {
                 if (a.mp === 0 && b.mp > 0) return 1;
                 if (b.mp === 0 && a.mp > 0) return -1;
-                return b.pts - a.pts || b.w - a.w || a.l - b.l;
+                
+                let gdA = a.gf - a.ga;
+                let gdB = b.gf - b.ga;
+                
+                return b.pts - a.pts || gdB - gdA || b.w - a.w || a.l - b.l;
             });
         }
 
@@ -761,6 +775,7 @@
             let rows = '';
             sortedPlayers.forEach((p, index) => {
                 const isZeroMatch = p.mp === 0;
+                const gd = p.gf - p.ga;
                 rows += `
                 <tr class="border-b border-slate-100 hover:bg-slate-50 transition-colors cursor-pointer ${index === 0 && !isZeroMatch ? 'bg-gradient-to-r from-yellow-50 to-transparent' : ''}" onclick="window.openPlayerStats(${p.id})">
                     <td class="px-5 py-4 text-center font-black ${index === 0 && !isZeroMatch ? 'text-yellow-600 text-xl' : 'text-slate-400'}">${index === 0 && !isZeroMatch ? '<i class="fas fa-crown"></i>' : index + 1}</td>
@@ -774,6 +789,9 @@
                     <td class="px-5 py-4 text-center text-emerald-600 font-black">${p.w}</td>
                     <td class="px-5 py-4 text-center text-slate-400 font-semibold">${p.d}</td>
                     <td class="px-5 py-4 text-center text-rose-500 font-semibold">${p.l}</td>
+                    <td class="px-5 py-4 text-center text-slate-600 font-bold hidden sm:table-cell">${p.gf}</td>
+                    <td class="px-5 py-4 text-center text-slate-600 font-bold hidden sm:table-cell">${p.ga}</td>
+                    <td class="px-5 py-4 text-center font-black hidden sm:table-cell ${gd > 0 ? 'text-emerald-500' : gd < 0 ? 'text-rose-500' : 'text-slate-400'}">${gd > 0 ? '+'+gd : gd}</td>
                     <td class="px-5 py-4 text-center font-black text-brand-blue text-xl bg-blue-50/50">${p.pts}</td>
                 </tr>`;
             });
@@ -786,10 +804,19 @@
                 <div class="overflow-x-auto">
                     <table class="w-full text-sm text-left whitespace-nowrap min-w-[600px]">
                         <thead class="text-xs text-slate-400 uppercase bg-white font-black border-b-2 border-slate-100">
-                            <tr><th class="px-5 py-4 text-center w-14">Rank</th><th class="px-5 py-4">Nama Player</th><th class="px-5 py-4 text-center tooltip" title="Main">Main</th><th class="px-5 py-4 text-center text-emerald-600">Menang</th><th class="px-5 py-4 text-center">Seri</th><th class="px-5 py-4 text-center text-rose-500">Kalah</th><th class="px-5 py-4 text-center text-brand-blue">Poin Total</th></tr>
+                            <tr><th class="px-5 py-4 text-center w-14">Rank</th><th class="px-5 py-4">Nama Player</th><th class="px-5 py-4 text-center tooltip" title="Main">M</th><th class="px-5 py-4 text-center text-emerald-600">W</th><th class="px-5 py-4 text-center">D</th><th class="px-5 py-4 text-center text-rose-500">L</th><th class="px-5 py-4 text-center hidden sm:table-cell" title="Gol Memasukkan">GM</th><th class="px-5 py-4 text-center hidden sm:table-cell" title="Gol Kemasukan">GK</th><th class="px-5 py-4 text-center hidden sm:table-cell" title="Selisih Gol">SG</th><th class="px-5 py-4 text-center text-brand-blue">Poin Total</th></tr>
                         </thead>
                         <tbody>${rows}</tbody>
                     </table>
+                </div>
+                <div class="bg-blue-50/50 p-4 sm:p-6 border-t border-slate-100">
+                    <div class="flex gap-3">
+                        <i class="fas fa-info-circle text-brand-blue mt-0.5 text-lg"></i>
+                        <div>
+                            <h4 class="text-xs font-black text-brand-blue uppercase tracking-wider mb-1">INFO KLASEMEN (Poin vs Gol)</h4>
+                            <p class="text-[11px] sm:text-xs text-slate-600 font-medium leading-relaxed">Poin total <strong class="text-brand-blue">diakumulasi murni dari rasio pertandingan</strong> (Menang = 3 poin, Seri = 1 Poin). <strong class="text-slate-800">Jumlah Gol sama sekali TIDAK menambah Poin</strong>. Gol (GM, GK, SG) hanya dihitung sebagai penentu peringkat apabila terdapat beberapa player dengan jumlah poin yang sama.</p>
+                        </div>
+                    </div>
                 </div>
             </div>`;
             return topWrHtml + htmlTable;
@@ -1065,6 +1092,8 @@
                                     <th class="p-4 text-center w-16 text-emerald-600" title="Total Menang">Menang</th>
                                     <th class="p-4 text-center w-16" title="Total Seri">Seri</th>
                                     <th class="p-4 text-center w-16 text-rose-500" title="Total Kalah">Kalah</th>
+                                    <th class="p-4 text-center w-16" title="Gol Memasukkan">GM</th>
+                                    <th class="p-4 text-center w-16" title="Gol Kemasukan">GK</th>
                                     <th class="p-4 text-center w-16 text-brand-blue" title="Total Poin">Poin</th>
                                     <th class="p-4 text-center rounded-tr-xl w-16">Aksi</th>
                                 </tr>
@@ -1093,11 +1122,13 @@
                     <td class="p-2"><input type="number" min="0" value="${p.manualW || 0}" onchange="window.updatePlayer(${i}, 'manualW', this.value)" class="w-full border-2 border-slate-200 rounded-lg px-2 py-2 font-bold text-emerald-600 outline-none text-center focus:border-emerald-500" title="Suntik Menang"></td>
                     <td class="p-2"><input type="number" min="0" value="${p.manualD || 0}" onchange="window.updatePlayer(${i}, 'manualD', this.value)" class="w-full border-2 border-slate-200 rounded-lg px-2 py-2 font-bold text-slate-700 outline-none text-center focus:border-slate-500" title="Suntik Seri"></td>
                     <td class="p-2"><input type="number" min="0" value="${p.manualL || 0}" onchange="window.updatePlayer(${i}, 'manualL', this.value)" class="w-full border-2 border-slate-200 rounded-lg px-2 py-2 font-bold text-rose-500 outline-none text-center focus:border-rose-500" title="Suntik Kalah"></td>
+                    <td class="p-2"><input type="number" min="0" value="${p.manualGf || 0}" onchange="window.updatePlayer(${i}, 'manualGf', this.value)" class="w-full border-2 border-slate-200 rounded-lg px-2 py-2 font-bold text-slate-600 outline-none text-center focus:border-slate-500" title="Suntik Gol Memasukkan (GM)"></td>
+                    <td class="p-2"><input type="number" min="0" value="${p.manualGa || 0}" onchange="window.updatePlayer(${i}, 'manualGa', this.value)" class="w-full border-2 border-slate-200 rounded-lg px-2 py-2 font-bold text-slate-600 outline-none text-center focus:border-slate-500" title="Suntik Gol Kemasukan (GK)"></td>
                     <td class="p-2"><input type="number" min="0" value="${p.manualPts || 0}" onchange="window.updatePlayer(${i}, 'manualPts', this.value)" class="w-full border-2 border-slate-200 rounded-lg px-2 py-2 font-black text-brand-blue outline-none text-center focus:border-brand-blue bg-blue-50" title="Suntik Poin Total"></td>
                     <td class="p-2 text-center"><button onclick="window.deletePlayer(${i})" class="w-10 h-10 rounded-xl text-rose-500 bg-rose-50 hover:bg-rose-500 hover:text-white transition-colors"><i class="fas fa-trash-alt"></i></button></td>
                 </tr>`;
             });
-            if(!window.appData.players || window.appData.players.length === 0) html += `<tr><td colspan="8" class="text-center p-8 text-slate-400 font-bold">Daftar pemain kosong.</td></tr>`;
+            if(!window.appData.players || window.appData.players.length === 0) html += `<tr><td colspan="10" class="text-center p-8 text-slate-400 font-bold">Daftar pemain kosong.</td></tr>`;
 
             html += `</tbody></table></div></div>`;
 
@@ -1227,7 +1258,7 @@
                 id: Date.now(), 
                 name: 'Pemain Baru', 
                 photo: 'images/default.png',
-                manualMp: 0, manualW: 0, manualD: 0, manualL: 0, manualPts: 0
+                manualMp: 0, manualW: 0, manualD: 0, manualL: 0, manualPts: 0, manualGf: 0, manualGa: 0
             }); 
             window.saveData(); 
         }
