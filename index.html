@@ -3,7 +3,7 @@
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>MASTERLAGA - E-Football Community</title>
+    <title>MASTERLAGA - E-Football H2H & Standings</title>
     
    <!-- PWA / Tambah ke Layar Utama -->
     <link rel="icon" type="image/png" href="images/logo.png">
@@ -157,30 +157,32 @@
             
             <div id="quick-pin-section" class="p-8 bg-slate-50 text-center">
                 <p class="text-sm text-slate-500 font-bold mb-4">Masukkan Kode PIN Pintasan</p>
-                <input type="password" id="quick-pin-input" placeholder="***" class="w-2/3 mx-auto border-2 border-slate-300 rounded-xl px-4 py-4 mb-6 focus:border-brand-blue focus:outline-none transition-colors text-center font-black tracking-widest text-3xl shadow-inner block" maxlength="6">
+                <input type="password" id="quick-pin-input" placeholder="***" onkeydown="if(event.key==='Enter') window.verifyQuickPin()" class="w-2/3 mx-auto border-2 border-slate-300 rounded-xl px-4 py-4 mb-6 focus:border-brand-blue focus:outline-none transition-colors text-center font-black tracking-widest text-3xl shadow-inner block" maxlength="6">
                 <button onclick="window.verifyQuickPin()" class="w-full bg-brand-blue hover:bg-blue-600 text-white font-black py-4 rounded-xl shadow-lg transition-all transform hover:-translate-y-1">MASUK</button>
             </div>
 
             <div id="quick-form-section" class="p-6 bg-slate-50 hidden">
                 <div class="flex flex-col gap-4">
                     <label class="text-[10px] font-black text-slate-400 uppercase tracking-wider text-center -mb-2">PLAYER 1 (ATAS)</label>
-                    <select id="quick-p1" onchange="window.updateQuickResultOptions()" class="w-full border-2 border-slate-300 rounded-xl px-4 py-3 font-bold text-brand-dark bg-white outline-none focus:border-brand-blue"></select>
+                    <select id="quick-p1" class="w-full border-2 border-slate-300 rounded-xl px-4 py-3 font-bold text-brand-dark bg-white outline-none focus:border-brand-blue"></select>
                     
                     <div class="flex items-center justify-center -my-3 relative z-10">
                         <span class="bg-brand-accent text-brand-dark font-black px-3 py-1 rounded-full text-xs border-2 border-white shadow-sm uppercase tracking-widest">Lawan</span>
                     </div>
                     
-                    <select id="quick-p2" onchange="window.updateQuickResultOptions()" class="w-full border-2 border-slate-300 rounded-xl px-4 py-3 font-bold text-brand-dark bg-white outline-none focus:border-rose-500"></select>
+                    <select id="quick-p2" class="w-full border-2 border-slate-300 rounded-xl px-4 py-3 font-bold text-brand-dark bg-white outline-none focus:border-rose-500"></select>
                     <label class="text-[10px] font-black text-slate-400 mt-1 uppercase tracking-wider text-center -mb-2">PLAYER 2 (BAWAH)</label>
 
-                    <label class="text-[10px] font-black text-slate-400 mt-4 uppercase tracking-wider text-center">HASIL AKHIR</label>
-                    <select id="quick-result" class="w-full border-2 border-brand-accent rounded-xl px-4 py-3 font-black text-center text-brand-dark bg-brand-accent cursor-pointer outline-none">
-                        <!-- Otomatis diisi oleh JS -->
-                    </select>
-
-                    <div class="flex items-center gap-2 mt-2 bg-purple-50 p-3 rounded-xl border border-purple-200">
-                        <input type="checkbox" id="quick-shame" class="w-5 h-5 accent-purple-600 cursor-pointer">
-                        <label for="quick-shame" class="text-purple-700 font-bold text-xs cursor-pointer select-none leading-tight"><i class="fas fa-skull mr-1"></i> Selisih 3+ Gol (Kalah Tidak Terhormat)</label>
+                    <div class="flex items-center justify-between gap-4 mt-4">
+                        <div class="flex-1">
+                            <label class="text-[10px] font-black text-slate-400 uppercase text-center block mb-1">SKOR P1</label>
+                            <input type="number" id="quick-p1-score" onkeydown="if(event.key==='Enter') window.submitQuickMatch()" class="w-full border-2 border-slate-300 rounded-xl px-4 py-3 font-black text-center text-xl text-brand-dark bg-white outline-none focus:border-brand-blue" placeholder="0" min="0">
+                        </div>
+                        <div class="font-black text-2xl text-slate-300">-</div>
+                        <div class="flex-1">
+                            <label class="text-[10px] font-black text-slate-400 uppercase text-center block mb-1">SKOR P2</label>
+                            <input type="number" id="quick-p2-score" onkeydown="if(event.key==='Enter') window.submitQuickMatch()" class="w-full border-2 border-slate-300 rounded-xl px-4 py-3 font-black text-center text-xl text-brand-dark bg-white outline-none focus:border-rose-500" placeholder="0" min="0">
+                        </div>
                     </div>
 
                     <button onclick="window.submitQuickMatch()" class="w-full mt-4 bg-emerald-500 hover:bg-emerald-600 text-white font-black py-4 rounded-xl shadow-lg transition-all transform hover:-translate-y-1"><i class="fas fa-save mr-2"></i> SIMPAN HASIL</button>
@@ -198,7 +200,7 @@
                 <h3 class="text-2xl font-black tracking-widest">AKSES ADMIN</h3>
             </div>
             <div class="p-8 bg-slate-50">
-                <input type="password" id="admin-password-input" placeholder="Masukkan Sandi..." class="w-full border-2 border-slate-200 rounded-xl px-4 py-3 mb-6 focus:border-brand-purple focus:outline-none transition-colors text-center font-bold tracking-widest text-lg shadow-inner" autofocus>
+                <input type="password" id="admin-password-input" placeholder="Masukkan Sandi..." onkeydown="if(event.key==='Enter') window.handleLogin()" class="w-full border-2 border-slate-200 rounded-xl px-4 py-3 mb-6 focus:border-brand-purple focus:outline-none transition-colors text-center font-bold tracking-widest text-lg shadow-inner" autofocus>
                 <button onclick="window.handleLogin()" class="w-full bg-brand-purple hover:bg-brand-blue text-white font-black py-4 rounded-xl shadow-lg shadow-brand-purple/30 transition-all transform hover:-translate-y-1">MASUK SISTEM</button>
             </div>
         </div>
@@ -290,12 +292,10 @@
          LOGIKA APLIKASI & JAVASCRIPT
          ========================================== -->
     <script type="module">
-        // 1. IMPORT MODUL FIREBASE 
         import { initializeApp } from "https://www.gstatic.com/firebasejs/11.6.1/firebase-app.js";
         import { getAuth, signInAnonymously, signInWithCustomToken, onAuthStateChanged } from "https://www.gstatic.com/firebasejs/11.6.1/firebase-auth.js";
         import { getFirestore, doc, setDoc, onSnapshot } from "https://www.gstatic.com/firebasejs/11.6.1/firebase-firestore.js";
 
-        // --- DAFTAR LOGO KLUB LOKAL ---
         window.officialClubs = [
             { name: "AC Milan", url: "images/acmilan.svg" },
             { name: "Arsenal", url: "images/arsenal.png" },
@@ -314,7 +314,6 @@
             { name: "Tottenham", url: "images/totenham.png" }
         ];
 
-        // 2. STATE DATA AWAL (DEFAULT)
         window.appData = {
             adminPassword: "admin004",
             quickInputPassword: "004", 
@@ -334,14 +333,12 @@
         window.isAdminLoggedIn = false;
         window.currentShameData = { mem: [], dib: [] };
         
-        // 3. KONFIGURASI FIREBASE
         let firebaseConfig;
         let isCanvasEnv = typeof __firebase_config !== 'undefined';
         
         if (isCanvasEnv) {
             firebaseConfig = JSON.parse(__firebase_config);
         } else {
-            // KONFIGURASI FIREBASE ANDA
             firebaseConfig = {
                 apiKey: "AIzaSyDzzWOTIWNumv0rbFkB6Ayl6EmhG_bAN0s",
                 authDomain: "masterlaga-bf34b.firebaseapp.com",
@@ -356,7 +353,35 @@
         const auth = getAuth(app);
         const db = getFirestore(app);
 
-        // 4. KONEKSI SINKRONISASI AMAN
+        // SETUP TOMBOL KEMBALI (HISTORY API / BACK BUTTON)
+        history.replaceState({ tab: 'klasemen' }, '', '#klasemen');
+        window.addEventListener('popstate', function(event) {
+            // Cek apakah ada modal/pop-up yang terbuka, jika ada tutup semuanya
+            const modals = ['custom-dialog', 'player-stats-modal', 'quick-modal', 'admin-modal', 'summary-modal'];
+            let isModalOpen = false;
+            for(let id of modals) {
+                const el = document.getElementById(id);
+                if(el && !el.classList.contains('hidden')) {
+                    el.classList.add('hidden');
+                    isModalOpen = true;
+                }
+            }
+            
+            // Jika tidak ada modal terbuka, navigasikan pindah tab
+            if (!isModalOpen) {
+                if (event.state && event.state.tab) {
+                    window.activeTab = event.state.tab;
+                } else {
+                    window.activeTab = 'klasemen';
+                }
+                window.renderApp();
+            }
+        });
+
+        window.pushModalState = function() {
+            history.pushState({ modalOpen: true, tab: window.activeTab }, '', window.location.hash);
+        }
+
         async function connectDatabase() {
             try {
                 if (isCanvasEnv && typeof __initial_auth_token !== 'undefined' && __initial_auth_token) {
@@ -381,30 +406,10 @@
 
                     onSnapshot(docRef, (docSnap) => {
                         if (docSnap.exists()) {
-                            // AMBIL DATA DARI CLOUD
                             window.appData = docSnap.data();
-                            
-                            // Migrasi data lama ke format baru yang support inject point
-                            if (window.appData.players) {
-                                window.appData.players = window.appData.players.map(p => ({
-                                    ...p,
-                                    manualMp: p.manualMp || 0,
-                                    manualW: p.manualW || 0,
-                                    manualD: p.manualD || 0,
-                                    manualL: p.manualL || 0,
-                                    manualPts: p.manualPts || 0
-                                }));
-                            }
-                            
                             document.getElementById('sync-status').innerHTML = '<i class="fas fa-cloud text-emerald-400"></i> Online (Data Sinkron)';
                             window.renderApp();
-                            
-                            const urlParams = new URLSearchParams(window.location.search);
-                            if (urlParams.get('view') === 'hari-ini' || urlParams.get('view') === 'match-today') {
-                                setTimeout(() => { window.showSummaryModal(); }, 500);
-                            }
                         } else {
-                            // Jika database memang benar-benar kosong di cloud
                             document.getElementById('sync-status').innerHTML = '<i class="fas fa-database text-yellow-500"></i> DB Kosong. Tunggu Admin.';
                             window.renderApp();
                         }
@@ -426,17 +431,14 @@
         }
         connectDatabase();
 
-        // ==========================================
         // FUNGSI UMUM & POP-UP
-        // ==========================================
-
         window.customDialogCallback = null;
         window.openConfirmDialog = function(title, message, callback) {
             document.getElementById('dialog-title').innerText = title;
             document.getElementById('dialog-msg').innerText = message;
             document.getElementById('dialog-icon').className = 'fas fa-exclamation-triangle text-3xl';
             document.getElementById('dialog-icon-container').className = 'w-16 h-16 rounded-full bg-red-100 text-red-600 flex items-center justify-center mx-auto mb-4';
-            document.getElementById('dialog-btn-confirm').innerText = 'Yakin Hapus';
+            document.getElementById('dialog-btn-confirm').innerText = 'Lanjutkan';
             document.getElementById('dialog-btn-confirm').className = 'flex-1 py-4 text-red-600 font-black hover:bg-red-50 transition-colors';
             document.getElementById('dialog-btn-cancel').style.display = 'block';
             window.customDialogCallback = callback;
@@ -470,20 +472,19 @@
             toastTimeout = setTimeout(() => { toast.style.display = 'none'; }, 3000);
         }
 
-        // ==========================================
-        // FITUR QUICK MATCH (VS MENGAMBANG)
-        // ==========================================
-
+        // FITUR QUICK MATCH (VS)
         window.openQuickInput = function() {
             document.getElementById('quick-modal').classList.remove('hidden');
             document.getElementById('quick-pin-section').classList.remove('hidden');
             document.getElementById('quick-form-section').classList.add('hidden');
             document.getElementById('quick-pin-input').value = '';
+            window.pushModalState();
             setTimeout(() => document.getElementById('quick-pin-input').focus(), 100);
         }
 
         window.closeQuickInput = function() {
             document.getElementById('quick-modal').classList.add('hidden');
+            if(history.state && history.state.modalOpen) history.back();
         }
 
         window.verifyQuickPin = function() {
@@ -498,51 +499,46 @@
                 window.appData.players.forEach(p => { pOptions += `<option value="${p.id}">${p.name}</option>`; });
                 document.getElementById('quick-p1').innerHTML = pOptions;
                 document.getElementById('quick-p2').innerHTML = pOptions;
-                window.updateQuickResultOptions();
+                document.getElementById('quick-p1-score').value = '';
+                document.getElementById('quick-p2-score').value = '';
             } else {
                 window.openAlertDialog("Akses Ditolak", "Kode PIN yang dimasukkan salah!");
             }
         }
 
-        window.updateQuickResultOptions = function() {
-            const p1Id = document.getElementById('quick-p1').value;
-            const p2Id = document.getElementById('quick-p2').value;
-            
-            const p1Name = p1Id ? window.appData.players.find(p => p.id == p1Id)?.name : 'Pemain Atas';
-            const p2Name = p2Id ? window.appData.players.find(p => p.id == p2Id)?.name : 'Pemain Bawah';
-
-            const resSelect = document.getElementById('quick-result');
-            resSelect.innerHTML = `
-                <option value="p1">${p1Name} Menang 🏆</option>
-                <option value="draw">Seri (Draw) 🤝</option>
-                <option value="p2">${p2Name} Menang 🏆</option>
-            `;
-        }
-
         window.submitQuickMatch = function() {
             const p1 = document.getElementById('quick-p1').value;
             const p2 = document.getElementById('quick-p2').value;
-            const res = document.getElementById('quick-result').value;
-            const shame = document.getElementById('quick-shame').checked;
+            const s1 = parseInt(document.getElementById('quick-p1-score').value);
+            const s2 = parseInt(document.getElementById('quick-p2-score').value);
 
             if(!p1 || !p2) { window.openAlertDialog("Data Tidak Lengkap", "Harap pilih kedua pemain."); return; }
             if(p1 === p2) { window.openAlertDialog("Tidak Valid", "Player 1 dan Player 2 tidak boleh sama."); return; }
+            if(isNaN(s1) || isNaN(s2)) { window.openAlertDialog("Skor Kosong", "Harap isi skor pertandingan."); return; }
 
-            window.appData.h2hMatches.push({ id: Date.now(), p1Id: parseInt(p1), p2Id: parseInt(p2), winner: res, dateStr: new Date().toISOString(), shame: shame });
+            let res = 'draw';
+            if(s1 > s2) res = 'p1';
+            else if(s2 > s1) res = 'p2';
+
+            const isShame = Math.abs(s1 - s2) >= 3;
+
+            window.appData.h2hMatches.push({ 
+                id: Date.now(), p1Id: parseInt(p1), p2Id: parseInt(p2), 
+                p1Score: s1, p2Score: s2,
+                winner: res, dateStr: new Date().toISOString(), shame: isShame 
+            });
             window.saveData(); 
 
             window.showToast("Hasil pertandingan berhasil disimpan!");
-            
-            document.getElementById('quick-p1').value = '';
-            document.getElementById('quick-p2').value = '';
-            document.getElementById('quick-shame').checked = false;
-            window.updateQuickResultOptions();
+            window.closeQuickInput();
         }
 
-        // ==========================================
-        // FITUR STATISTIK PEMAIN (MODAL DETAIL)
-        // ==========================================
+        // STATISTIK PEMAIN (MODAL DETAIL)
+        window.openPlayerStats = function(playerId) {
+            window.pushModalState();
+        }
 
+        // STATISTIK PEMAIN (MODAL DETAIL)
         window.openPlayerStats = function(playerId) {
             const player = window.appData.players.find(p => p.id === playerId);
             if(!player) return;
@@ -551,7 +547,6 @@
             document.getElementById('stat-player-photo').src = player.photo;
             document.getElementById('stat-player-photo').onerror = function() { this.src = `https://ui-avatars.com/api/?name=${player.name}&background=0f172a&color=fff`; };
 
-            // Ambil point suntikan (jika ada) + dari H2H
             let mp = parseInt(player.manualMp) || 0;
             let w = parseInt(player.manualW) || 0;
             let d = parseInt(player.manualD) || 0;
@@ -605,7 +600,7 @@
             const sortedH2h = Object.values(h2hStats).sort((a,b) => b.mp - a.mp);
             
             if(sortedH2h.length === 0) {
-                h2hHtml = `<p class="text-xs text-slate-400 text-center py-4 border border-dashed rounded-lg">Belum ada riwayat pertandingan dengan pemain lain.</p>`;
+                h2hHtml = `<p class="text-xs text-slate-400 text-center py-4 border border-dashed rounded-lg">Belum ada riwayat pertandingan.</p>`;
             } else {
                 sortedH2h.forEach(opp => {
                     h2hHtml += `
@@ -627,6 +622,7 @@
 
         window.closePlayerStats = function() {
             document.getElementById('player-stats-modal').classList.add('hidden');
+            if(history.state && history.state.modalOpen) history.back();
         }
 
         window.showShameDetails = function(type) {
@@ -636,16 +632,20 @@
              window.openAlertDialog(title, text);
         }
 
-        // ==========================================
         // NAVIGASI & ADMIN LOGIN
-        // ==========================================
-
         window.toggleAdminPanel = function() {
-            if (window.isAdminLoggedIn) { window.activeTab = 'admin'; window.renderApp(); } 
-            else document.getElementById('admin-modal').classList.remove('hidden');
+            if (window.isAdminLoggedIn) { window.switchTab('admin'); } 
+            else { 
+                document.getElementById('admin-modal').classList.remove('hidden');
+                window.pushModalState();
+                setTimeout(() => document.getElementById('admin-password-input').focus(), 100);
+            }
         }
         
-        window.closeAdminModal = function() { document.getElementById('admin-modal').classList.add('hidden'); }
+        window.closeAdminModal = function() { 
+            document.getElementById('admin-modal').classList.add('hidden'); 
+            if(history.state && history.state.modalOpen) history.back();
+        }
         
         window.handleLogin = function() {
             const input = document.getElementById('admin-password-input').value;
@@ -676,16 +676,16 @@
             window.renderApp();
         }
 
-        window.switchTab = function(tabId) { window.activeTab = tabId; window.renderApp(); }
+        window.switchTab = function(tabId) { 
+            window.activeTab = tabId; 
+            history.pushState({ tab: tabId }, '', '#' + tabId);
+            window.renderApp(); 
+        }
 
-        // ==========================================
         // RENDER HALAMAN UTAMA
-        // ==========================================
-
         window.getCalculatedStandings = function() {
             let stats = {};
             
-            // Inisialisasi data pemain dengan base manual (suntikan) jika ada
             window.appData.players.forEach(p => { 
                 stats[p.id] = { 
                     ...p, 
@@ -697,7 +697,6 @@
                 }; 
             });
 
-            // Tambahkan data dari riwayat Head to Head
             window.appData.h2hMatches.forEach(m => {
                 if(!stats[m.p1Id] || !stats[m.p2Id]) return;
                 stats[m.p1Id].mp++; stats[m.p2Id].mp++;
@@ -726,7 +725,6 @@
 
             const sortedPlayers = window.getCalculatedStandings();
 
-            // Hitung WinRate pakai data H2H + Data Suntikan
             let wrPlayers = sortedPlayers.map(p => {
                 let wr = p.mp > 0 ? (p.w / p.mp) * 100 : 0;
                 return { ...p, wr: wr };
@@ -1000,16 +998,16 @@
                     
                     <div class="bg-brand-dark p-6 rounded-2xl border border-slate-700 mb-8 flex flex-col gap-4">
                         <div class="flex flex-col md:flex-row items-center gap-4">
-                            <select id="new-h2h-p1" class="flex-1 w-full border-2 border-slate-700 rounded-xl px-4 py-3 font-bold text-slate-200 bg-slate-800">${pOptions}</select>
-                            <select id="new-h2h-result" class="flex-1 w-full md:flex-none md:w-48 border-2 border-brand-accent rounded-xl px-4 py-3 font-black text-center text-brand-dark bg-brand-accent cursor-pointer">
-                                <option value="p1">Menang (Kiri) 🏆</option><option value="draw">Seri (Draw) 🤝</option><option value="p2">Menang (Kanan) 🏆</option>
-                            </select>
-                            <select id="new-h2h-p2" class="flex-1 w-full border-2 border-slate-700 rounded-xl px-4 py-3 font-bold text-slate-200 bg-slate-800">${pOptions}</select>
+                            <select id="new-h2h-p1" class="flex-1 w-full md:w-auto border-2 border-slate-700 rounded-xl px-4 py-3 font-bold text-slate-200 bg-slate-800">${pOptions}</select>
+                            
+                            <div class="flex items-center gap-2">
+                                <input type="number" id="new-h2h-p1-score" placeholder="0" onkeydown="if(event.key==='Enter') window.addH2HMatch()" class="w-16 border-2 border-brand-accent rounded-xl px-2 py-3 font-black text-center text-brand-dark bg-white outline-none focus:bg-brand-accent">
+                                <span class="text-slate-400 font-black">-</span>
+                                <input type="number" id="new-h2h-p2-score" placeholder="0" onkeydown="if(event.key==='Enter') window.addH2HMatch()" class="w-16 border-2 border-brand-accent rounded-xl px-2 py-3 font-black text-center text-brand-dark bg-white outline-none focus:bg-brand-accent">
+                            </div>
+
+                            <select id="new-h2h-p2" class="flex-1 w-full md:w-auto border-2 border-slate-700 rounded-xl px-4 py-3 font-bold text-slate-200 bg-slate-800">${pOptions}</select>
                             <button onclick="window.addH2HMatch()" class="w-full md:w-auto bg-blue-600 hover:bg-blue-500 text-white font-black px-8 py-3 rounded-xl transition-colors"><i class="fas fa-save mr-2"></i> SIMPAN</button>
-                        </div>
-                        <div class="flex items-center gap-2 px-2">
-                            <input type="checkbox" id="new-h2h-shame" class="w-5 h-5 accent-purple-600 cursor-pointer">
-                            <label for="new-h2h-shame" class="text-purple-400 font-bold text-sm cursor-pointer select-none"><i class="fas fa-skull mr-1"></i> Selisih 3+ Gol (Pasal Kalah Tidak Terhormat)</label>
                         </div>
                     </div>
 
@@ -1020,10 +1018,11 @@
                 const p1 = window.appData.players.find(p => p.id === m.p1Id)?.name || 'Unknown';
                 const p2 = window.appData.players.find(p => p.id === m.p2Id)?.name || 'Unknown';
                 
-                let resultBadge = '';
-                if(m.winner === 'p1') resultBadge = `<span class="bg-brand-blue text-white px-3 py-1 rounded-md text-[10px] sm:text-xs font-black tracking-widest">KIRI MENANG</span>`;
-                else if(m.winner === 'p2') resultBadge = `<span class="bg-rose-500 text-white px-3 py-1 rounded-md text-[10px] sm:text-xs font-black tracking-widest">KANAN MENANG</span>`;
-                else resultBadge = `<span class="bg-slate-300 text-slate-700 px-3 py-1 rounded-md text-[10px] sm:text-xs font-black tracking-widest">SERI</span>`;
+                const s1 = m.p1Score !== undefined ? m.p1Score : '-';
+                const s2 = m.p2Score !== undefined ? m.p2Score : '-';
+                const scoreText = `${s1} : ${s2}`;
+
+                let resultBadge = `<span class="bg-slate-800 text-brand-accent px-4 py-1.5 rounded-lg text-sm font-black tracking-widest border border-slate-700">${scoreText}</span>`;
 
                 let shameBadge = m.shame ? `<div class="w-full text-center mt-2"><span class="bg-purple-600 text-white px-3 py-1 rounded-full text-[10px] font-black tracking-widest inline-flex items-center gap-1 shadow-sm"><i class="fas fa-skull"></i> KALAH TIDAK TERHORMAT</span></div>` : '';
 
@@ -1033,7 +1032,7 @@
                             <div class="flex-1 w-full flex justify-between items-center sm:block sm:w-auto">
                                <div class="font-bold sm:text-right w-full ${m.winner === 'p1' ? 'text-brand-blue' : 'text-slate-500'}">${p1}</div>
                             </div>
-                            <div class="shrink-0 text-center w-32">${resultBadge}</div>
+                            <div class="shrink-0 text-center">${resultBadge}</div>
                             <div class="flex-1 w-full flex justify-between items-center sm:block sm:w-auto">
                                <div class="font-bold sm:text-left w-full ${m.winner === 'p2' ? 'text-rose-500' : 'text-slate-500'}">${p2}</div>
                             </div>
@@ -1046,7 +1045,7 @@
             
             html += `</div></div>`;
 
-            // DAFTAR PEMAIN (DENGAN FITUR SUNTIK POIN)
+            // DAFTAR PEMAIN
             html += `
                 <div class="bg-white p-8 rounded-3xl shadow-xl border border-slate-100 overflow-hidden">
                     <div class="flex flex-col sm:flex-row justify-between items-start sm:items-center mb-6 gap-4">
@@ -1153,6 +1152,27 @@
                     
                     <div class="md:col-span-2"><label class="text-xs font-black text-slate-400 block uppercase">Deskripsi Komunitas (About)</label>
                     <textarea onchange="window.updateAbout('description', this.value)" class="w-full border-2 rounded-xl px-4 py-3 font-bold text-slate-700 h-24">${info.description || ''}</textarea></div>
+                </div>`;
+
+            // UI BACKUP & RESTORE
+            html += `
+                <h3 class="text-xl font-black text-slate-800 mb-6 mt-10 flex items-center gap-3 border-t border-slate-100 pt-8"><i class="fas fa-database text-brand-blue"></i> Backup & Restore Data</h3>
+                <div class="grid grid-cols-1 md:grid-cols-2 gap-6">
+                    <div class="p-6 bg-blue-50 rounded-2xl border border-blue-200 text-center flex flex-col items-center justify-center">
+                        <i class="fas fa-download text-4xl text-brand-blue mb-4"></i>
+                        <h4 class="font-bold text-slate-800 mb-2">Download Backup Data</h4>
+                        <p class="text-xs text-slate-500 mb-6 px-4">Simpan seluruh data klasemen & riwayat ke HP/Laptop sebagai file cadangan.</p>
+                        <button onclick="window.downloadBackup()" class="w-full py-4 bg-brand-blue text-white font-black rounded-xl hover:bg-blue-600 transition-transform shadow-lg transform hover:-translate-y-1"><i class="fas fa-save mr-2"></i> DOWNLOAD FILE</button>
+                    </div>
+                    <div class="p-6 bg-emerald-50 rounded-2xl border border-emerald-200 text-center flex flex-col items-center justify-center relative overflow-hidden group">
+                        <i class="fas fa-upload text-4xl text-emerald-500 mb-4 group-hover:scale-110 transition-transform"></i>
+                        <h4 class="font-bold text-slate-800 mb-2">Upload Restore Data</h4>
+                        <p class="text-xs text-slate-500 mb-6 px-4">Kembalikan data yang hilang dari file backup (.json) yang pernah Anda download.</p>
+                        <div class="relative w-full">
+                            <input type="file" id="restore-file" accept=".json" onchange="window.handleRestoreFile(event)" class="absolute inset-0 w-full h-full opacity-0 cursor-pointer z-10" title="Klik untuk pilih file backup">
+                            <button class="w-full py-4 bg-emerald-500 text-white font-black rounded-xl hover:bg-emerald-600 transition-colors shadow-lg"><i class="fas fa-folder-open mr-2"></i> PILIH FILE BACKUP</button>
+                        </div>
+                    </div>
                 </div>
             </div></div>`;
             return html;
@@ -1171,7 +1191,7 @@
             if (!file) return;
             
             if (file.size > 300 * 1024) { 
-                window.openAlertDialog("File Terlalu Besar", "Ukuran foto maksimal 300KB agar aplikasi tetap cepat. Silakan gunakan opsi 'Pilih Logo Klub' di atasnya jika kepenuhan.");
+                window.openAlertDialog("File Terlalu Besar", "Ukuran foto maksimal 300KB agar aplikasi tetap cepat.");
                 event.target.value = '';
                 return;
             }
@@ -1207,21 +1227,13 @@
                 id: Date.now(), 
                 name: 'Pemain Baru', 
                 photo: 'images/default.png',
-                manualMp: 0,
-                manualW: 0,
-                manualD: 0,
-                manualL: 0,
-                manualPts: 0
+                manualMp: 0, manualW: 0, manualD: 0, manualL: 0, manualPts: 0
             }); 
             window.saveData(); 
         }
         window.updatePlayer = function(index, field, value) { 
-            // Jika yang diupdate adalah angka (manualMp, manualW, dsb), ubah jadi integer
-            if(field.startsWith('manual')) {
-                window.appData.players[index][field] = parseInt(value) || 0;
-            } else {
-                window.appData.players[index][field] = value; 
-            }
+            if(field.startsWith('manual')) { window.appData.players[index][field] = parseInt(value) || 0; } 
+            else { window.appData.players[index][field] = value; }
             window.saveData(); 
         }
         window.deletePlayer = function(index) {
@@ -1233,15 +1245,29 @@
         window.addH2HMatch = function() {
             const p1 = document.getElementById('new-h2h-p1').value;
             const p2 = document.getElementById('new-h2h-p2').value;
-            const res = document.getElementById('new-h2h-result').value;
-            const shame = document.getElementById('new-h2h-shame').checked;
+            const s1 = parseInt(document.getElementById('new-h2h-p1-score').value);
+            const s2 = parseInt(document.getElementById('new-h2h-p2-score').value);
 
             if(!p1 || !p2) { window.openAlertDialog("Data Tidak Lengkap", "Harap pilih kedua player."); return; }
             if(p1 === p2) { window.openAlertDialog("Tidak Valid", "Player 1 dan Player 2 tidak boleh sama."); return; }
+            if(isNaN(s1) || isNaN(s2)) { window.openAlertDialog("Skor Kosong", "Harap isi skor pertandingan."); return; }
+
+            let res = 'draw';
+            if(s1 > s2) res = 'p1';
+            else if(s2 > s1) res = 'p2';
+
+            const isShame = Math.abs(s1 - s2) >= 3;
 
             if(!window.appData.h2hMatches) window.appData.h2hMatches = [];
-            window.appData.h2hMatches.push({ id: Date.now(), p1Id: parseInt(p1), p2Id: parseInt(p2), winner: res, dateStr: new Date().toISOString(), shame: shame });
+            window.appData.h2hMatches.push({ 
+                id: Date.now(), p1Id: parseInt(p1), p2Id: parseInt(p2), 
+                p1Score: s1, p2Score: s2,
+                winner: res, dateStr: new Date().toISOString(), shame: isShame 
+            });
             window.saveData(); 
+            
+            document.getElementById('new-h2h-p1-score').value = '';
+            document.getElementById('new-h2h-p2-score').value = '';
         }
         window.deleteH2HMatch = function(index) {
             window.openConfirmDialog("Batalkan Riwayat Tanding?", "Laga ini akan dihapus permanen.", () => {
@@ -1261,7 +1287,49 @@
         }
         window.updateWinner = function(index, field, value) { window.appData.winners[index][field] = value; window.saveData(); }
 
+        // FUNGSI BACKUP & RESTORE
+        window.downloadBackup = function() {
+            const dataStr = JSON.stringify(window.appData, null, 2);
+            const blob = new Blob([dataStr], { type: "application/json" });
+            const url = URL.createObjectURL(blob);
+            const a = document.createElement('a');
+            const date = new Date().toISOString().split('T')[0];
+            a.href = url;
+            a.download = `masterlaga_backup_${date}.json`;
+            document.body.appendChild(a);
+            a.click();
+            document.body.removeChild(a);
+            URL.revokeObjectURL(url);
+            window.showToast("Backup berhasil didownload!");
+        }
+
+        window.handleRestoreFile = function(event) {
+            const file = event.target.files[0];
+            if (!file) return;
+
+            window.openConfirmDialog("Restore Data?", "Peringatan! Data klasemen saat ini akan ditimpa total dengan isi dari file backup. Apakah Abang yakin?", () => {
+                const reader = new FileReader();
+                reader.onload = function(e) {
+                    try {
+                        const parsedData = JSON.parse(e.target.result);
+                        if (parsedData && parsedData.players) {
+                            window.appData = parsedData;
+                            window.saveData(); 
+                            window.showToast("Data sukses dipulihkan!");
+                        } else {
+                            window.openAlertDialog("File Salah", "Sepertinya ini bukan file backup Masterlaga yang valid.");
+                        }
+                    } catch (error) {
+                        window.openAlertDialog("Error", "Gagal membaca file. Pastikan file berformat .json dan tidak rusak.");
+                    }
+                    document.getElementById('restore-file').value = ''; 
+                };
+                reader.readAsText(file);
+            });
+        }
+
         window.showSummaryModal = function() {
+            window.pushModalState();
             const today = new Date().toLocaleDateString('id-ID', { weekday: 'long', year: 'numeric', month: 'long', day: 'numeric' });
             document.getElementById('summary-date').innerText = today;
 
@@ -1277,12 +1345,15 @@
                     const p1 = window.appData.players.find(p => p.id === m.p1Id)?.name || 'Unknown';
                     const p2 = window.appData.players.find(p => p.id === m.p2Id)?.name || 'Unknown';
                     
-                    let resultBadge = '';
+                    const s1 = m.p1Score !== undefined ? m.p1Score : '-';
+                    const s2 = m.p2Score !== undefined ? m.p2Score : '-';
+                    
                     let p1Style = 'text-slate-600', p2Style = 'text-slate-600';
 
-                    if(m.winner === 'p1') { resultBadge = `<span class="bg-brand-blue text-white px-2 py-1 rounded text-[10px] font-black shadow">WIN</span>`; p1Style = 'text-brand-blue font-black text-sm sm:text-lg'; } 
-                    else if(m.winner === 'p2') { resultBadge = `<span class="bg-brand-blue text-white px-2 py-1 rounded text-[10px] font-black shadow">WIN</span>`; p2Style = 'text-brand-blue font-black text-sm sm:text-lg'; } 
-                    else { resultBadge = `<span class="bg-slate-300 text-slate-700 px-2 py-1 rounded text-[10px] font-black">SERI</span>`; }
+                    if(m.winner === 'p1') { p1Style = 'text-brand-blue font-black text-sm sm:text-lg'; } 
+                    else if(m.winner === 'p2') { p2Style = 'text-brand-blue font-black text-sm sm:text-lg'; } 
+
+                    let resultBadge = `<span class="bg-brand-dark text-brand-accent border border-slate-700 px-3 py-1 rounded-md text-sm font-black shadow-sm tracking-widest">${s1} : ${s2}</span>`;
 
                     let shameBadge = m.shame ? `<div class="w-full text-center mt-1"><span class="bg-purple-600 text-white px-2 py-0.5 rounded text-[8px] font-black tracking-widest inline-flex items-center gap-1 shadow-sm"><i class="fas fa-skull"></i> KALAH TIDAK TERHORMAT</span></div>` : '';
 
@@ -1290,7 +1361,7 @@
                     <div class="bg-white border ${m.shame ? 'border-purple-300 bg-purple-50' : 'border-slate-200'} rounded-xl p-4 flex flex-col shadow-sm">
                         <div class="flex items-center justify-between w-full">
                             <div class="flex-1 text-right font-bold truncate ${p1Style} pr-3">${p1}</div>
-                            <div class="shrink-0 text-center w-16">${resultBadge}</div>
+                            <div class="shrink-0 text-center">${resultBadge}</div>
                             <div class="flex-1 text-left font-bold truncate ${p2Style} pl-3">${p2}</div>
                         </div>
                         ${shameBadge}
@@ -1303,7 +1374,10 @@
             document.getElementById('summary-modal').classList.remove('hidden');
         }
 
-        window.closeSummaryModal = function() { document.getElementById('summary-modal').classList.add('hidden'); }
+        window.closeSummaryModal = function() { 
+            document.getElementById('summary-modal').classList.add('hidden'); 
+            if(history.state && history.state.modalOpen) history.back();
+        }
 
         window.renderTabs = function() {
             const tabs = [
